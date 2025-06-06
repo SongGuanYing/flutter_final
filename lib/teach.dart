@@ -16,28 +16,28 @@ class TeachPage extends StatelessWidget {
         'subtitle': '觀看教學影片',
         'icon': Icons.accessibility_new,
         // *** 重要：請替換為真實的 YouTube 影片連結 ***
-        'videoUrl': 'https://www.youtube.com/watch?v=kR2tJqQnFwE' // 範例：哲睿Jerry的影片
+        'videoUrl': 'https://www.youtube.com/watch?v=ZwOVfDu_bng'
       },
       {
         'title': '超慢跑步頻練習',
         'subtitle': '學習如何找到適合的步頻',
         'icon': Icons.music_note,
         // *** 重要：請替換為真實的 YouTube 影片連結 ***
-        'videoUrl': 'https://www.youtube.com/watch?v=NnO5cKx-Nq0' // 範例：班長布萊恩的影片
+        'videoUrl': 'https://www.youtube.com/watch?v=YO5wcZeDki4'// 範例：班長布萊恩的影片
       },
       {
         'title': '跑步前熱身運動',
         'subtitle': '避免運動傷害',
         'icon': Icons.whatshot,
         // *** 重要：請替換為真實的 YouTube 影片連結 ***
-        'videoUrl': 'https://www.youtube.com/watch?v=P67bS89R8h0' // 範例：Keep Fitness的影片
+        'videoUrl': 'https://www.youtube.com/watch?v=-fI2BPfeTHI'
       },
       {
         'title': '跑步後拉伸運動',
         'subtitle': '加速恢復',
         'icon': Icons.fitness_center,
         // *** 重要：請替換為真實的 YouTube 影片連結 ***
-        'videoUrl': 'https://www.youtube.com/watch?v=zJg5gB8R0zU' // 範例：Keep Fitness的影片
+        'videoUrl': 'https://www.youtube.com/watch?v=N1K2WARIxV4'
       },
     ];
 
@@ -62,9 +62,17 @@ class TeachPage extends StatelessWidget {
                 const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             subtitle: Text(item['subtitle']! as String,
                 style: const TextStyle(fontSize: 16)),
-            trailing: Icon(Icons.play_circle_fill,
-                color: Theme.of(context).colorScheme.secondary,
-                size: 30), // 使用主題 secondaryColor
+            trailing: _HoverPlayButton(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VideoPlayerScreen(videoUrl: item['videoUrl'] as String),
+                  ),
+                );
+              },
+            ),
             onTap: () {
               Navigator.push(
                 context,
@@ -78,6 +86,48 @@ class TeachPage extends StatelessWidget {
         ))
             .toList(),
       ],
+    );
+  }
+}
+
+// 新增的互動播放按鈕 Widget
+class _HoverPlayButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _HoverPlayButton({required this.onTap});
+
+  @override
+  State<_HoverPlayButton> createState() => _HoverPlayButtonState();
+}
+
+class _HoverPlayButtonState extends State<_HoverPlayButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isPressed ? Colors.purple.withOpacity(0.2) : Colors.transparent,
+        ),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.9 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: Icon(
+            Icons.play_circle_fill,
+            color: _isPressed ? Colors.purple : Theme.of(context).colorScheme.secondary,
+            size: 30,
+          ),
+        ),
+      ),
     );
   }
 }
