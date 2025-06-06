@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
 
@@ -14,6 +15,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  String _unit = '公里';
+  String _notification = '每天';
   File? _profileImage;
   String? selectedHeight;
   String? selectedWeight;
@@ -46,6 +49,119 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _loadSettings();  // 初始化时加载设置
+  }
+
+  void _showUnitDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('選擇單位'),
+        content: DropdownButton<String>(
+          value: _unit,
+          isExpanded: true,
+          items: ['公里', '英里'].map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _unit = newValue!;
+            });
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('選擇通知頻率'),
+        content: DropdownButton<String>(
+          value: _notification,
+          isExpanded: true,
+          items: ['每天', '一天兩次', '兩天一次', '永不'].map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _notification = newValue!;
+            });
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showConnectingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('正在搜尋裝置...'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text('請確保穿戴裝置已開啟並在藍牙範圍內'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
+
+    // 3秒後自動關閉（模擬連接過程）
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未發現可用裝置，請重試')),
+      );
+    });
+  }
+
+  // 顯示已連接裝置列表
+  void _showConnectedDevices(
+      BuildContext context, List<Map<String, String>> devices) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('已連接裝置'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: devices.length,
+            itemBuilder: (context, index) {
+              final device = devices[index];
+              return ListTile(
+                leading: const Icon(Icons.watch),
+                title: Text(device['name']!),
+                subtitle: Text(device['id']!),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('關閉'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showPostureSettingDialog(BuildContext context) {
@@ -174,6 +290,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Map<String, String>> connectedDevices = [
+      {'name': '小米手環7', 'id': 'DF:34:AB:12'},
+      {'name': 'Apple Watch', 'id': 'FE:23:BC:45'},
+    ];
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -291,24 +412,18 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 const Text('GPX 工具', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                ListTile( // 匯入 GPX
-                    leading: Icon(Icons.file_upload, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                    title: const Text('匯入 GPX 檔案', style: TextStyle(fontSize: 18)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // TODO: 實現 GPX 匯入功能
-                      print('匯入 GPX');
-                    }
+                ListTile(
+                  leading: Icon(Icons.file_upload, color: Theme.of(context).primaryColor),
+                  title: const Text('匯入 GPX 檔案', style: TextStyle(fontSize: 18)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => print('lmao'),
                 ),
                 const Divider(),
-                ListTile( // 匯出 GPX
-                    leading: Icon(Icons.file_download, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                    title: const Text('匯出跑步紀錄為 GPX', style: TextStyle(fontSize: 18)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // TODO: 實現 GPX 匯出功能
-                      print('匯出 GPX');
-                    }
+                ListTile(
+                  leading: Icon(Icons.file_download, color: Theme.of(context).primaryColor),
+                  title: const Text('匯出跑步紀錄為 GPX', style: TextStyle(fontSize: 18)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => print('lmao'),
                 ),
               ],
             ),
@@ -324,26 +439,27 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('穿戴裝置', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  '穿戴裝置',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 10),
+                // 連接新裝置按鈕
                 ListTile(
-                    leading: Icon(Icons.watch, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                    title: const Text('連接新的裝置', style: TextStyle(fontSize: 18)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // TODO: 導航到裝置配對頁面
-                      print('連接裝置');
-                    }
+                  leading: Icon(Icons.watch, color: Theme.of(context).primaryColor),
+                  title: const Text('連接新的裝置', style: TextStyle(fontSize: 18)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showConnectingDialog(context),
                 ),
                 const Divider(),
+                // 已連接裝置列表
                 ListTile(
-                    leading: Icon(Icons.bluetooth_connected, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                    title: const Text('已連接裝置', style: TextStyle(fontSize: 18)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // TODO: 導航到已連接裝置列表頁面
-                      print('查看已連接裝置');
-                    }
+                  leading: Icon(Icons.bluetooth_connected,
+                      color: Theme.of(context).primaryColor),
+                  title: const Text('連接過的裝置', style: TextStyle(fontSize: 18)),
+                  subtitle: Text('${connectedDevices.length}個裝置已連接'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showConnectedDevices(context, connectedDevices),
                 ),
               ],
             ),
@@ -362,19 +478,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Text('通用設定', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 ListTile(
-                  leading: Icon(Icons.straighten, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                  title: const Text('單位設定 (公里/英里)', style: TextStyle(fontSize: 18)),
+                  leading: Icon(Icons.straighten, color: Theme.of(context).primaryColor),
+                  title: Text('單位設定 ($_unit)', style: const TextStyle(fontSize: 18)),
                   trailing: const Icon(Icons.chevron_right),
-                  // TODO: 點擊後導航到單位設定頁面
+                  onTap: _showUnitDialog,
                 ),
                 const Divider(),
                 ListTile(
-                  leading: Icon(Icons.notifications_none, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
-                  title: const Text('通知設定', style: TextStyle(fontSize: 18)),
+                  leading: Icon(Icons.notifications_none, color: Theme.of(context).primaryColor),
+                  title: Text('通知設定 ($_notification)', style: const TextStyle(fontSize: 18)),
                   trailing: const Icon(Icons.chevron_right),
-                  // TODO: 點擊後導航到通知設定頁面
+                  onTap: _showNotificationDialog,
                 ),
-                // TODO: 添加更多通用設定項目
+                // 可在此添加更多設定
               ],
             ),
           ),
@@ -388,10 +504,44 @@ class _ProfilePageState extends State<ProfilePage> {
             leading: Icon(Icons.info_outline, color: Theme.of(context).primaryColor), // 使用主題 primaryColor
             title: const Text('關於 App', style: TextStyle(fontSize: 18)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: 顯示 App 資訊或導航到關於頁面
-              print('關於 App');
-            },
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text(
+                      '關於 App',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                    ),
+                    content: RichText(
+                      text: TextSpan(
+                        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
+                        children: const [
+                          TextSpan(
+                            text: ' 這是一款老少適宜的運動紀錄應用程式，讓你輕鬆追蹤跑步、健走、等活動。\n\n版本：',
+                          ),
+                          TextSpan(
+                            text: '1.0.0\n',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                          ),
+                          TextSpan(
+                            text: '\n開發者：',
+                          ),
+                          TextSpan(
+                            text: '潘振業，宋冠穎，范嘉和，薛博徽',
+                            style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('關閉'),
+                      ),
+                    ],
+                  ),
+                );
+              }
           ),
         ),
         const SizedBox(height: 20),
