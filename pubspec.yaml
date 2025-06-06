@@ -12,19 +12,23 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   table_calendar: ^3.0.9
-  flutter_map: ^6.1.0
-  intl: ^0.18.0 # 添加這一行，使用最新版本
-  geolocator: ^11.0.0
+  flutter_map: ^8.1.1
+  intl: ^0.20.2 # 添加這一行，使用最新版本
+  geolocator: ^14.0.1
   audioplayers: ^6.0.0
   sqflite: ^2.4.2
   webview_flutter: ^4.2.2
   image_picker: ^1.0.4
   shared_preferences: ^2.2.2
+  file_picker: ^10.1.9
+  xml: ^6.4.0
+  path_provider: ^2.1.1
+  url_launcher: ^6.1.11
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
