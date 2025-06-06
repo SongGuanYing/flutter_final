@@ -9,11 +9,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-// 引入外部套件，如果需要更逼真的外觀可以考慮
-// import 'package:fl_chart/fl_chart.dart'; // 範例：用於數據圖表
-// import 'package:Maps_flutter/Maps_flutter.dart'; // 範例：用於地圖
 
-// 主應用程式入口
 void main() => runApp(const App());
 
 class App extends StatelessWidget {
