@@ -1,0 +1,33 @@
+name: flutter_app
+description: A new Flutter project.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.1.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  table_calendar: ^3.0.9
+  flutter_map: ^6.1.0
+  intl: ^0.18.0 # 添加這一行，使用最新版本
+  geolocator: ^11.0.0
+  audioplayers: ^6.0.0
+  sqflite: ^2.4.2
+  webview_flutter: ^4.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/map.jpg
+    - assets/flutter.png
+    - assets/audios/
