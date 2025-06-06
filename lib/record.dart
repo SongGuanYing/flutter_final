@@ -17,7 +17,7 @@ class _RecordPageState extends State<RecordPage> {
   final MapController _mapController = MapController();
 
   bool _isMetronomePlaying = false;
-  int _targetBPM = 100; // 預設 100 BPM
+  int _targetBPM = 150; // 預設 100 BPM
   final int _baseBPM = 120; // 基礎音訊的 BPM（需要與你的音訊文件匹配）
 
   late AudioPlayer _metronomePlayer;
