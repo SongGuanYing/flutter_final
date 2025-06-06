@@ -3,10 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:math';
-import 'package:geolocator/geolocator.dart'; // Import geolocator
 
-// 索引 2: 運動追蹤 - 跑步進行中的實時數據和引導 (功能 1, 2, 3, 7, 9, 10)
 class RecordPage extends StatefulWidget {
   const RecordPage({super.key});
 
@@ -15,80 +14,81 @@ class RecordPage extends StatefulWidget {
 }
 
 class _RecordPageState extends State<RecordPage> {
-  // Map Controller for programmatically moving the map
   final MapController _mapController = MapController();
 
-  // State variables for Pace Guidance
   bool _isMetronomePlaying = false;
-  int _targetBPM = 100;
-  late AudioPlayer _audioPlayer;
-  Timer? _metronomeTimer;
-  final String _metronomeSoundPath = 'audios/tick.mp3';
+  int _targetBPM = 100; // 預設 100 BPM
+  final int _baseBPM = 120; // 基礎音訊的 BPM（需要與你的音訊文件匹配）
 
-  // 計時器相關的 State variables
+  late AudioPlayer _metronomePlayer;
+  bool _isAudioPlayerInitialized = false;
+
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _timer;
-  String _elapsedTime = '00:00:00';
+  String _elapsedTime = '00:00:00:00';
   bool _isRunning = false;
 
-  // 距離和配速相關的 State variables
   double _currentDistance = 0.0;
   String _currentPace = '00:00';
   final double _averageSlowRunSpeedKph = 6.0;
 
-  // 心率模擬相關的 State variables
   int _currentHeartRate = 75;
   final int _restingHeartRate = 75;
   final int _runningHeartRateMin = 130;
   final int _runningHeartRateMax = 170;
   final Random _random = Random();
 
-  // Location variables
-  LatLng? _currentLocation; // User's current geographical location
-  StreamSubscription<Position>? _positionStreamSubscription; // Stream to listen for location updates
+  LatLng? _currentLocation;
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
-    _checkAndRequestLocationPermission(); // Check and request permission on init
+    _initializeAudioPlayer();
+    _checkAndRequestLocationPermission();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _stopwatch.stop();
-    _metronomeTimer?.cancel();
-    _audioPlayer.dispose();
-    _positionStreamSubscription?.cancel(); // Cancel location stream
+    if (_isAudioPlayerInitialized) {
+      _metronomePlayer.dispose();
+    }
+    _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
-  // --- Location Handling Functions ---
-  Future<void> _checkAndRequestLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  // 初始化音頻播放器
+  Future<void> _initializeAudioPlayer() async {
+    _metronomePlayer = AudioPlayer();
+    try {
+      // 移除循環播放設定，因為使用30分鐘的完整音檔
+      // await _metronomePlayer.setReleaseMode(ReleaseMode.loop);
+      // 預設音量
+      await _metronomePlayer.setVolume(0.8);
+      setState(() {
+        _isAudioPlayerInitialized = true;
+      });
+      print('節拍器音頻播放器初始化成功');
+    } catch (e) {
+      print('初始化節拍器音頻播放器失敗: $e');
+    }
+  }
 
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  Future<void> _checkAndRequestLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled, don't continue
-      // accessing the position and request users to enable the location services.
-      print('Location services are disabled.');
-      // Optionally show a dialog to the user
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('請啟用位置服務以追蹤您的位置。')),
       );
       return;
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied, next time you could show a dialog
-        // with a explanation to the user.
-        print('Location permissions are denied');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('位置權限已被拒絕。')),
         );
@@ -97,98 +97,98 @@ class _RecordPageState extends State<RecordPage> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      print('Location permissions are permanently denied, we cannot request permissions.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('位置權限已被永久拒絕，請在設定中開啟。')),
       );
       return;
     }
 
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
     _startLocationUpdates();
   }
 
   void _startLocationUpdates() {
     const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high, // Use high accuracy for better tracking
-      distanceFilter: 5, // Update every 5 meters
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5,
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((Position position) {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
-        // Automatically move the map camera to the new location
-        _mapController.move(_currentLocation!, 17.0); // Zoom in closer
+        _mapController.move(_currentLocation!, 17.0);
       });
-      print('Location updated: ${position.latitude}, ${position.longitude}');
     });
   }
 
-  // --- Timer & Data Update Functions ---
   void _startTimer() {
-    setState(() {
-      _isRunning = true;
-    });
+    setState(() => _isRunning = true);
     _stopwatch.start();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    // 使用 10ms 間隔來顯示百分秒
+    _timer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
       setState(() {
-        _elapsedTime = _formatDuration(_stopwatch.elapsed);
+        _elapsedTime = _formatDurationWithCentiseconds(_stopwatch.elapsed);
         _updateDistanceAndPace();
         _updateHeartRate();
       });
     });
-    print('計時器開始');
+
+    if (_isMetronomePlaying) {
+      _startMetronome();
+    }
   }
 
   void _pauseTimer() {
-    setState(() {
-      _isRunning = false;
-    });
+    setState(() => _isRunning = false);
     _stopwatch.stop();
     _timer?.cancel();
-    print('計時器暫停');
+
+    if (_isMetronomePlaying) {
+      _pauseMetronome();
+    }
   }
 
   void _resetTimer() {
     if (_isMetronomePlaying) {
-      _toggleMetronome();
+      _stopMetronome();
     }
 
     setState(() {
       _isRunning = false;
       _stopwatch.reset();
-      _elapsedTime = '00:00:00';
+      _elapsedTime = '00:00:00:00';
       _currentDistance = 0.0;
       _currentPace = '00:00';
       _currentHeartRate = _restingHeartRate;
     });
     _stopwatch.stop();
     _timer?.cancel();
-    print('計時器重置');
   }
 
-  String _formatDuration(Duration duration) {
+  String _formatDurationWithCentiseconds(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$hours:$minutes:$seconds';
+    int totalMilliseconds = duration.inMilliseconds;
+    int centiseconds = (totalMilliseconds % 1000) ~/ 10; // 百分秒 (00-99)
+    int seconds = (totalMilliseconds / 1000).floor();
+    int minutes = (seconds / 60).floor();
+    int hours = (minutes / 60).floor();
+
+    seconds = seconds % 60;
+    minutes = minutes % 60;
+
+    return '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}:${twoDigits(centiseconds)}';
   }
 
   void _updateDistanceAndPace() {
     final double distancePerSecond = _averageSlowRunSpeedKph / 3600.0;
-    _currentDistance = _stopwatch.elapsed.inSeconds * distancePerSecond;
+    _currentDistance = _stopwatch.elapsed.inMilliseconds / 1000.0 * distancePerSecond;
 
     if (_currentDistance > 0) {
-      final int totalElapsedSeconds = _stopwatch.elapsed.inSeconds;
-      final int totalSecondsPerKm = (totalElapsedSeconds / _currentDistance).round();
-
+      final int totalElapsedMilliseconds = _stopwatch.elapsed.inMilliseconds;
+      final int totalMillisecondsPerKm = (totalElapsedMilliseconds / _currentDistance).round();
+      final int totalSecondsPerKm = totalMillisecondsPerKm ~/ 1000;
       final int minutes = totalSecondsPerKm ~/ 60;
       final int seconds = totalSecondsPerKm % 60;
-
       _currentPace = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     } else {
       _currentPace = '00:00';
@@ -198,74 +198,91 @@ class _RecordPageState extends State<RecordPage> {
   void _updateHeartRate() {
     setState(() {
       if (_isRunning) {
-        if (_currentHeartRate < _runningHeartRateMin) {
-          _currentHeartRate += _random.nextInt(3) + 1;
-        } else {
-          _currentHeartRate += _random.nextInt(5) - 2;
-        }
+        _currentHeartRate += _random.nextInt(5) - 2;
         _currentHeartRate = _currentHeartRate.clamp(_runningHeartRateMin - 5, _runningHeartRateMax + 5);
       } else {
-        if (_currentHeartRate > _restingHeartRate) {
-          _currentHeartRate -= _random.nextInt(3) + 1;
-        } else {
-          _currentHeartRate += _random.nextInt(3) - 1;
-        }
+        _currentHeartRate += _random.nextInt(3) - 1;
         _currentHeartRate = _currentHeartRate.clamp(_restingHeartRate - 5, _restingHeartRate + 10);
       }
-      _currentHeartRate = _currentHeartRate.clamp(50, 200);
     });
   }
 
-  // --- Metronome Functions ---
   void _toggleMetronome() {
-    setState(() {
-      _isMetronomePlaying = !_isMetronomePlaying;
-    });
-
+    setState(() => _isMetronomePlaying = !_isMetronomePlaying);
     if (_isMetronomePlaying) {
       _startMetronome();
-      print('節拍器開始播放, BPM: $_targetBPM');
     } else {
       _stopMetronome();
-      print('節拍器暫停');
     }
   }
 
-  void _startMetronome() {
-    _metronomeTimer?.cancel();
-    final double intervalSeconds = 60.0 / _targetBPM;
-    final Duration interval = Duration(milliseconds: (intervalSeconds * 1000).round());
+  Future<void> _startMetronome() async {
+    if (!_isAudioPlayerInitialized) {
+      print('音頻播放器尚未初始化');
+      return;
+    }
 
-    _metronomeTimer = Timer.periodic(interval, (timer) async {
-      await _audioPlayer.play(AssetSource(_metronomeSoundPath));
-    });
+    try {
+      // 計算播放速度比例
+      double playbackRate = _targetBPM / _baseBPM;
+
+      // 設置播放速度 (audioplayers 支援 0.5 到 2.0 的速度)
+      playbackRate = playbackRate.clamp(0.5, 2.0);
+      await _metronomePlayer.setPlaybackRate(playbackRate);
+
+      // 開始播放音訊（不循環，因為是30分鐘完整音檔）
+      await _metronomePlayer.play(AssetSource('audios/tick1.mp3'));
+
+      print('節拍器開始播放，BPM: $_targetBPM, 播放速度: $playbackRate');
+    } catch (e) {
+      print('啟動節拍器失敗: $e');
+    }
   }
 
-  void _stopMetronome() {
-    _metronomeTimer?.cancel();
+  Future<void> _pauseMetronome() async {
+    try {
+      await _metronomePlayer.pause();
+    } catch (e) {
+      print('暫停節拍器失敗: $e');
+    }
   }
 
-  void _adjustBPM(int delta) {
+  Future<void> _stopMetronome() async {
+    try {
+      await _metronomePlayer.stop();
+      setState(() => _isMetronomePlaying = false);
+    } catch (e) {
+      print('停止節拍器失敗: $e');
+    }
+  }
+
+  Future<void> _adjustBPM(int delta) async {
     setState(() {
-      _targetBPM = (_targetBPM + delta).clamp(100, 200);
+      _targetBPM = (_targetBPM + delta).clamp(60, 200);
     });
-    if (_isMetronomePlaying) {
-      _startMetronome();
+
+    // 如果節拍器正在播放，立即調整播放速度
+    if (_isMetronomePlaying && _isAudioPlayerInitialized) {
+      try {
+        double playbackRate = _targetBPM / _baseBPM;
+        playbackRate = playbackRate.clamp(0.5, 2.0);
+        await _metronomePlayer.setPlaybackRate(playbackRate);
+        print('調整播放速度: $playbackRate (BPM: $_targetBPM)');
+      } catch (e) {
+        print('調整播放速度失敗: $e');
+      }
     }
-    print('調整 BPM 至: $_targetBPM');
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine map center based on current location or default
-    final LatLng mapCenter = _currentLocation ?? LatLng(23.4792, 120.4497); // Default to Chiayi if no location yet
+    final LatLng mapCenter = _currentLocation ?? LatLng(23.4792, 120.4497);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ... (Existing UI for stats and metronome) ...
           Card(
             elevation: 4.0,
             child: Padding(
@@ -277,17 +294,11 @@ class _RecordPageState extends State<RecordPage> {
                     children: [
                       Column(children: [
                         const Text('時間', style: TextStyle(fontSize: 18)),
-                        Text(
-                          _elapsedTime,
-                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
-                        )
+                        Text(_elapsedTime, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor))
                       ]),
                       Column(children: [
                         const Text('距離 (km)', style: TextStyle(fontSize: 18)),
-                        Text(
-                          _currentDistance.toStringAsFixed(2),
-                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
-                        )
+                        Text(_currentDistance.toStringAsFixed(1), style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor))
                       ]),
                     ],
                   ),
@@ -297,17 +308,11 @@ class _RecordPageState extends State<RecordPage> {
                     children: [
                       Column(children: [
                         const Text('配速 (分/km)', style: TextStyle(fontSize: 18)),
-                        Text(
-                          _currentPace,
-                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
-                        )
+                        Text(_currentPace, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor))
                       ]),
                       Column(children: [
                         const Text('心率 (BPM)', style: TextStyle(fontSize: 18)),
-                        Text(
-                          _currentHeartRate.toString(),
-                          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.redAccent),
-                        )
+                        Text(_currentHeartRate.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.redAccent))
                       ]),
                     ],
                   ),
@@ -331,7 +336,44 @@ class _RecordPageState extends State<RecordPage> {
                         onPressed: () => _adjustBPM(-5),
                         color: Theme.of(context).primaryColor,
                       ),
-                      Text('$_targetBPM BPM', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _isAudioPlayerInitialized
+                              ? Theme.of(context).primaryColor.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _isMetronomePlaying
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.withOpacity(0.5),
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                                '$_targetBPM',
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isAudioPlayerInitialized
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey
+                                )
+                            ),
+                            Text(
+                                'BPM',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: _isAudioPlayerInitialized
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _adjustBPM(5),
@@ -341,7 +383,7 @@ class _RecordPageState extends State<RecordPage> {
                   ),
                   IconButton(
                     icon: Icon(_isMetronomePlaying ? Icons.pause : Icons.play_arrow),
-                    onPressed: _toggleMetronome,
+                    onPressed: _isAudioPlayerInitialized ? _toggleMetronome : null,
                     color: _isMetronomePlaying ? Colors.red : Theme.of(context).primaryColor,
                     iconSize: 30,
                   ),
@@ -350,17 +392,15 @@ class _RecordPageState extends State<RecordPage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // 地圖顯示區塊 (使用 flutter_map)
           Expanded(
             child: Card(
               elevation: 4.0,
               clipBehavior: Clip.antiAlias,
               child: FlutterMap(
-                mapController: _mapController, // Assign the MapController
+                mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: mapCenter, // Use current location or default
-                  initialZoom: _currentLocation != null ? 17.0 : 13.0, // Zoom in more if location is available
+                  initialCenter: mapCenter,
+                  initialZoom: _currentLocation != null ? 17.0 : 13.0,
                   minZoom: 5.0,
                   maxZoom: 18.0,
                 ),
@@ -369,19 +409,14 @@ class _RecordPageState extends State<RecordPage> {
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.run_tracker_app',
                   ),
-                  // Display user location marker only if location is available
                   if (_currentLocation != null)
                     MarkerLayer(
                       markers: [
                         Marker(
-                          point: _currentLocation!, // Use non-null asserted location
+                          point: _currentLocation!,
                           width: 80,
                           height: 80,
-                          child: const Icon(
-                            Icons.person_pin_circle, // Use a person icon for user
-                            color: Colors.blue, // Blue marker for user
-                            size: 40,
-                          ),
+                          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40),
                         ),
                       ],
                     ),
@@ -394,17 +429,8 @@ class _RecordPageState extends State<RecordPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ElevatedButton(
-                onPressed: () {
-                  if (_isRunning) {
-                    _pauseTimer();
-                  } else {
-                    _startTimer();
-                  }
-                },
-                child: Icon(
-                  _isRunning ? Icons.pause : Icons.play_arrow,
-                  size: 30,
-                ),
+                onPressed: () => _isRunning ? _pauseTimer() : _startTimer(),
+                child: Icon(_isRunning ? Icons.pause : Icons.play_arrow, size: 30),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(15),
                   shape: const CircleBorder(),
@@ -413,10 +439,7 @@ class _RecordPageState extends State<RecordPage> {
                 ),
               ),
               ElevatedButton(
-                onPressed: () {
-                  _resetTimer();
-                  print('停止');
-                },
+                onPressed: _resetTimer,
                 child: const Icon(Icons.stop, size: 30),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(15),
