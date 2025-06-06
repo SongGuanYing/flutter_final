@@ -17,7 +17,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 設定 App 的主要主題顏色
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
