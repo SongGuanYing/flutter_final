@@ -28,8 +28,16 @@ class _ProfilePageState extends State<ProfilePage> {
   String? selectedWeight;
 
   final heightOptions = List.generate(61, (i) => '${140 + i} cm');
-
   final weightOptions = List.generate(61, (i) => '${40 + i} kg');
+
+  final TextEditingController heightController = TextEditingController();
+  final TextEditingController weightController = TextEditingController();
+  @override
+  void dispose() {
+    heightController.dispose();
+    weightController.dispose();
+    super.dispose();
+  }
 
   double _intervalMinutes = 5.0;  // 默认5分钟
   String _reminderType = '震動';
@@ -333,46 +341,59 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: 30),
 
-        // 身高下拉選單
-        const Text('身高', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedHeight,
-          menuMaxHeight: 200,
-          isExpanded: true,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            filled: true,
-            hintText: '選擇身高',
+        // 身高輸入
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('身高', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: heightController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    filled: true,
+                    hintText: '輸入身高 (cm)',
+                  ),
+                  onChanged: (value) => setState(() => selectedHeight = value),
+                ),
+              ],
+            ),
           ),
-          items: heightOptions.map((v) => DropdownMenuItem(
-            value: v,
-            child: Text(v),
-          )).toList(),
-          onChanged: (v) => setState(() => selectedHeight = v),
         ),
-        const SizedBox(height: 20),
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('體重', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: weightController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    filled: true,
+                    hintText: '輸入體重 (kg)',
+                  ),
+                  onChanged: (value) => setState(() => selectedWeight = value),
+                ),
+              ],
+            ),
+          ),
+        ),
 
-// 體重下拉選單
-        const Text('體重', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedWeight,
-          menuMaxHeight: 200,
-          isExpanded: true,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            filled: true,
-            hintText: '選擇體重',
-          ),
-          items: weightOptions.map((v) => DropdownMenuItem(
-            value: v,
-            child: Text(v),
-          )).toList(),
-          onChanged: (v) => setState(() => selectedWeight = v),
-        ),
-        const SizedBox(height: 30),
+
 
         // 跑步相關設定區塊 (從原來的 ProfileSettingsPage 移過來，與功能 2, 3 相關)
         Card(
