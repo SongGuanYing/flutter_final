@@ -28,10 +28,12 @@ class DatabaseHelper {
       print('資料庫已存在: $databasePath');
       return await openDatabase(
         databasePath,
-        version: 1,
+        version: 2,
       );
     } else {
       print('資料庫不存在，將創建新資料庫: $databasePath');
+      await DatabaseHelper.instance.deleteDatabase();
+
       return await openDatabase(
         databasePath,
         onCreate: (db, version) async {
@@ -80,7 +82,7 @@ class DatabaseHelper {
             rethrow; // 拋出異常以便進一步除錯
           }
         },
-        version: 1,
+        version: 2,
       );
     }
   }

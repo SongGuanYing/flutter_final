@@ -3,7 +3,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
+import './db/db_init.dart';
+import './db/user.dart';
+import './db/run_record.dart';
+import './db/teach_data.dart';
+import './db/current_user.dart';
 
 double _cadenceValue = 180;
 // 索引 1: 工具 - GPX、裝置、設定等
@@ -548,8 +554,9 @@ class _ProfilePageState extends State<ProfilePage> {
         // 登出按鈕 (從原來的 ProfileSettingsPage 移過來)
         Center(
           child: ElevatedButton(
-            onPressed: () {
-              // TODO: 實現登出功能
+            onPressed: () async{
+              await CurrentUser.clearCurrentUser();
+              Phoenix.rebirth(context);
               print('登出');
             },
             child: const Text('登出'),
