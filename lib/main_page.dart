@@ -14,6 +14,9 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late Future<Map<String, dynamic>> weatherFuture;
+  DateTime _selectedDay = DateTime.now();
+  Map<DateTime, String> _dateNotes = {};
+  List<int> _runDays = [10, 15, 20, 25]; // 假設這些日期有跑步紀錄
 
   @override
   void initState() {
@@ -22,7 +25,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<Map<String, dynamic>> fetchChiayiWeather() async {
-    const String apiKey = 'ef44970dfcfa4777b8985755250706'; // ← 改成你的 API 金鑰
+    const String apiKey = 'ef44970dfcfa4777b8985755250706';
     final url = Uri.parse('https://api.weatherapi.com/v1/current.json?key=$apiKey&q=Chiayi%20City&lang=zh');
     final response = await http.get(url);
 
@@ -38,9 +41,65 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _handleDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('筆記 ${selectedDay.toLocal().toString().split(' ')[0]}'),
+        content: TextField(
+          controller: TextEditingController(
+              text: _dateNotes[DateTime(selectedDay.year, selectedDay.month, selectedDay.day)] ?? ''
+          ),
+          onChanged: (value) {
+            _dateNotes[DateTime(selectedDay.year, selectedDay.month, selectedDay.day)] = value;
+          },
+          maxLines: 3,
+          decoration: InputDecoration(hintText: '請輸入：'),
+        ),
+        actions: [
+          TextButton(
+            child: Text('取消'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: Text('保存'),
+            onPressed: () {
+              setState(() {});
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarker(DateTime date) {
+    final hasNote = _dateNotes.containsKey(DateTime(date.year, date.month, date.day));
+    final isRunDay = _runDays.contains(date.day) && date.month == _selectedDay.month;
+
+    if (hasNote || isRunDay) {
+      return Positioned(
+        right: 1,
+        bottom: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: hasNote ? Colors.redAccent : Theme.of(context).colorScheme.secondary,
+            shape: BoxShape.circle,
+          ),
+          width: 8,
+          height: 8,
+        ),
+      );
+    }
+    return SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
-    DateTime today = DateTime.now();
     int mockRunStreak = 10;
     double mockTotalDistance = 55.6;
     int mockTotalRuns = 15;
@@ -48,7 +107,7 @@ class _MainPageState extends State<MainPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // 📍 天氣資訊顯示
+        // 天氣資訊顯示 (保持不變)
         FutureBuilder<Map<String, dynamic>>(
           future: weatherFuture,
           builder: (context, snapshot) {
@@ -73,16 +132,22 @@ class _MainPageState extends State<MainPage> {
         ),
         const SizedBox(height: 16),
 
-        // 📆 日曆顯示
+        // 修改後的日曆顯示
         Card(
           elevation: 2.0,
           child: TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: today,
+            focusedDay: _selectedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            onDaySelected: _handleDaySelected,
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: Theme.of(context).primaryColor,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.blueAccent,
                 shape: BoxShape.circle,
               ),
               markerDecoration: BoxDecoration(
@@ -96,29 +161,13 @@ class _MainPageState extends State<MainPage> {
               titleCentered: true,
             ),
             calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                final runDays = [10, 15, 20, 25];
-                if (date.month == today.month && runDays.contains(date.day)) {
-                  return Positioned(
-                    right: 1,
-                    bottom: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        shape: BoxShape.circle,
-                      ),
-                      width: 8.0,
-                      height: 8.0,
-                    ),
-                  );
-                }
-                return null;
-              },
+              markerBuilder: (context, date, events) => _buildMarker(date),
             ),
           ),
         ),
         const SizedBox(height: 32),
 
+        // 以下保持不變...
         const Text('超慢跑總覽', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
         const SizedBox(height: 18),
 
