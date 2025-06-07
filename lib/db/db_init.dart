@@ -32,7 +32,7 @@ class DatabaseHelper {
       );
     } else {
       print('資料庫不存在，將創建新資料庫: $databasePath');
-      await DatabaseHelper.instance.deleteDatabase();
+      //await DatabaseHelper.instance.deleteDatabase();
 
       return await openDatabase(
         databasePath,

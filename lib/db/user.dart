@@ -5,7 +5,7 @@ class User {
   String userID;
   String? name;
   String? password;
-  String? photo;
+  String photo;
   double? height;
   double? weight;
   int? cadence;
@@ -14,7 +14,7 @@ class User {
     required this.userID,
     this.name,
     this.password,
-    this.photo,
+    required this.photo,
     this.height,
     this.weight,
     this.cadence,

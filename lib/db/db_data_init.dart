@@ -15,12 +15,14 @@ class DbDataInit {
         userID: 'user1',
         name: 'John Doe',
         password: 'password123',
+        photo:'',
         height: 175.0,
         weight: 70.0,
         cadence: 180,
       );
-      await user.insert();
-
+      if(await User.getById(user.userID) == null) {
+        await user.insert();
+      }
       // Insert TeachData
       TeachData teachData = TeachData(
         title: '跑步技巧',

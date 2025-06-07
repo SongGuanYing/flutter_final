@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:path_provider/path_provider.dart';
 
 import './db/db_init.dart';
 import './db/user.dart';
@@ -35,10 +36,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _loadCurrentUser() async {
     currentUser = await User.getCurrentUser();
+    if (currentUser != null) {
+      setState(() {
+        selectedName = currentUser?.name;
+        selectedHeight = currentUser?.height.toString();
+        selectedWeight = currentUser?.weight.toString();
+      });
+    }
     print('使用者名稱: ${currentUser?.name}');
-    selectedName='${currentUser?.name}';
-    selectedHeight='${currentUser?.height}';
-    selectedWeight='${currentUser?.weight}';
   }
 
   final TextEditingController _editController = TextEditingController();
@@ -282,7 +287,28 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  const Text('160      180      200', textAlign: TextAlign.center),
+                  Row(
+                    children: const [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('160'),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text('180'),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text('200'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               actions: [
@@ -295,6 +321,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   onPressed: () {
                     setState(() {  // 更新主頁面的狀態
                       _cadenceValue = tempCadence; // 確認後才存回實際變數
+                      currentUser?.cadence=_cadenceValue.round();
+                      currentUser?.insert();
                     });
                     print('設定步頻為: ${_cadenceValue.round()} BPM');
                     Navigator.of(context).pop();
@@ -308,17 +336,37 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _pickImage() async {
+  /*Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
       });
     }
+  }*/
+
+  Future<void> _pickAndSaveImagePath() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
+      final savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
+      currentUser!.photo= savedImage.path;
+      await currentUser?.insert();
+      print("currentUser: ${currentUser?.photo}");
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 如果 currentUser 尚未加載完成，顯示加載指示器
+    if (currentUser == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final List<Map<String, String>> connectedDevices = [
       {'name': '小米手環7', 'id': 'DF:34:AB:12'},
       {'name': 'Apple Watch', 'id': 'FE:23:BC:45'},
@@ -327,22 +375,24 @@ class _ProfilePageState extends State<ProfilePage> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
-          '使用者介面',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        Text(
+          '${currentUser!.name}',
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
 
         // 圓形頭像
         Center(
           child: GestureDetector(
-            onTap: _pickImage,
+            onTap: _pickAndSaveImagePath,
             child: CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey[300],
-              backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-              child: _profileImage == null
-                  ? const Icon(Icons.person, size: 60, color: Colors.grey)
+              backgroundImage: currentUser!.photo.isNotEmpty
+                  ? FileImage(File(currentUser!.photo))
+                  : null,
+              child:  currentUser!.photo.isEmpty
+                  ? Icon(Icons.person, size: 60, color: Colors.grey)
                   : null,
             ),
           ),

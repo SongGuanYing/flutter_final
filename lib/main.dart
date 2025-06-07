@@ -19,7 +19,7 @@ import './db/current_user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await DatabaseHelper.instance.deleteDatabase();
+  //await DatabaseHelper.instance.deleteDatabase();
   await DatabaseHelper.instance.printAllTablesAndData();
   runApp(
     Phoenix(
