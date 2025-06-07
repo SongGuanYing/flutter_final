@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_final/record.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'record.dart';
 
 // 索引 0: 主頁/儀表板
 class MainPage extends StatelessWidget {
@@ -139,6 +138,7 @@ class MainPage extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               // TODO: 點擊查看單次跑步詳細紀錄，導航到 DataAnalysisPage 的詳細頁面
+              // 日期、時間、時長、距離、配速、平均心率、GPX
               print('查看 2023/10/26 跑步詳細!');
             },
           ),

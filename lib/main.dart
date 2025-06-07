@@ -18,7 +18,7 @@ import './db/current_user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseHelper.instance.deleteDatabase();
+  // await DatabaseHelper.instance.deleteDatabase();
   await DatabaseHelper.instance.printAllTablesAndData();
   runApp(App());
 }
@@ -50,13 +50,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 2; // 預設到 MainPage (首頁)
-  final List<Widget> _pages = [
-    const RoutePage(),
-    const RecordPage(),
-    MainPage(onStartRun: () {  },),
-    const TeachPage(),
-    const ProfilePage(),
-  ];
+
+
 
   final List<BottomNavigationBarItem> _bottomItems = const [
     BottomNavigationBarItem(icon: Icon(Icons.map), label: '路線'),
@@ -133,8 +128,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // 處理 BottomNavigationBar 項目點擊事件
+  void _onItemTapped(int index) {
+    setState(() {
+      // BottomNavigationBar 的索引從 0 開始，對應 _pages 列表中的索引 1-5
+      _selectedIndex = index;
+    });
+  }
+
+  void handleStartRun() {
+    _onItemTapped(1);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      const RoutePage(),
+      const RecordPage(),
+      MainPage(onStartRun: () => _onItemTapped(1),),
+      const TeachPage(),
+      const ProfilePage(),
+    ];
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.directions_run_outlined, color: Colors.white),
