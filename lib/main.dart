@@ -51,16 +51,23 @@ class _HomeScreenState extends State<HomeScreen> {
   // 追蹤當前選中的頁面索引
   int _selectedIndex = 0;
 
+  void handleStartRun() {
+    _onItemTapped(1);
+  }
+
   // 定義所有頁面 Widget 列表，順序對應 _selectedIndex
   // 索引 0 對應 AppBar 的 Home 按鈕
   // 索引 1-5 對應 BottomNavigationBar 的項目
+  /*
   final List<Widget> _pages = [
     const RoutePage(),           // 索引 4: 路線
     const RecordPage(),         // 索引 2: 運動
-    const MainPage(),        // 索引 0: 主頁/儀表板
+    MainPage(onStartRun: handleStartRun),        // 索引 0: 主頁/儀表板
     const TeachPage(),         // 索引 5: 教學
     const ProfilePage(),            // 索引 1: 工具 (新的分頁)
   ];
+
+   */
 
   // 處理 BottomNavigationBar 項目點擊事件
   void _onItemTapped(int index) {
@@ -81,6 +88,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      const RoutePage(),           // 索引 4: 路線
+      const RecordPage(),         // 索引 2: 運動
+      MainPage(onStartRun: handleStartRun),        // 索引 0: 主頁/儀表板
+      const TeachPage(),         // 索引 5: 教學
+      const ProfilePage(),            // 索引 1: 工具 (新的分頁)
+    ];
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.directions_run_outlined, color: Colors.white),

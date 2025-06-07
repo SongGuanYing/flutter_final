@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_final/record.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'record.dart';
 
 // 索引 0: 主頁/儀表板
 class MainPage extends StatelessWidget {
-  const MainPage({Key? key}) : super(key: key);
-
+  const MainPage({Key? key, required this.onStartRun}) : super(key: key);
+  final VoidCallback onStartRun;
   @override
   Widget build(BuildContext context) {
     DateTime today = DateTime.now();
     int mockRunStreak = 10; // 模擬數據
     double mockTotalDistance = 55.6;
     int mockTotalRuns = 15;
-
-
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -108,6 +108,7 @@ class MainPage extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: () {
               // TODO: 點擊此按鈕開始跑步追蹤，導航到 TrackRunPage 並啟動功能 (對應功能 1, 7, 9, 10)
+              onStartRun();
               print('開始跑步!');
             },
             icon: const Icon(Icons.play_arrow),
