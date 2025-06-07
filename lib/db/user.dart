@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'db_init.dart';
-
+import 'current_user.dart';
 class User {
   String userID;
   String? name;
@@ -73,6 +73,13 @@ class User {
     }
     return null;
   }
+
+  static Future<User?> getCurrentUser() async {
+    final currentUserID = await CurrentUser.getCurrentUser();
+    if (currentUserID == null) return null;
+    return await User.getById(currentUserID);
+  }
+
 
   static Future<User?> verifyLogin(String userID, String password) async {
     final db = await DatabaseHelper.instance.database; // 使用單例資料庫

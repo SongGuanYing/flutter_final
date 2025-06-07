@@ -107,7 +107,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(), // 關閉對話框
+              onPressed: () async {
+                final user = await User.verifyLogin('user1', 'password123');
+                if (user != null) {
+                  await CurrentUser.setCurrentUser('user1');
+                  Navigator.of(context).pop(); // 關閉對話框
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('登入成功：user1')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('帳號或密碼錯誤')),
+                  );
+                }
+              }, // 關閉對話框
               child: const Text(''),//取消按鈕
             ),
             ElevatedButton(

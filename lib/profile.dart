@@ -24,18 +24,31 @@ class _ProfilePageState extends State<ProfilePage> {
   String _unit = '公里';
   String _notification = '每天';
   File? _profileImage;
+
+  User? currentUser;
+
+  String? selectedName;
   String? selectedHeight;
   String? selectedWeight;
 
-  final heightOptions = List.generate(61, (i) => '${140 + i} cm');
-  final weightOptions = List.generate(61, (i) => '${40 + i} kg');
 
+
+  void _loadCurrentUser() async {
+    currentUser = await User.getCurrentUser();
+    print('使用者名稱: ${currentUser?.name}');
+    selectedName='${currentUser?.name}';
+    selectedHeight='${currentUser?.height}';
+    selectedWeight='${currentUser?.weight}';
+  }
+
+  final TextEditingController _editController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
   @override
   void dispose() {
     heightController.dispose();
     weightController.dispose();
+    _editController.dispose();
     super.dispose();
   }
 
@@ -61,8 +74,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void initState() {
-    super.initState();
+
+    _loadCurrentUser();
     _loadSettings();  // 初始化时加载设置
+    super.initState();
   }
 
   void _showUnitDialog() {
@@ -341,7 +356,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: 30),
 
-        // 身高輸入
         Card(
           margin: const EdgeInsets.symmetric(vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -351,42 +365,84 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('身高', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: heightController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    filled: true,
-                    hintText: '輸入身高 (cm)',
-                  ),
-                  onChanged: (value) => setState(() => selectedHeight = value),
+                // 姓名
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '姓名',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Row(
+                      children: [
+                        Text(selectedName ?? '未設定'),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () {
+                            _showEditDialog('姓名', selectedName, (val) {
+                              setState(() {
+                                selectedName = val;
+                                currentUser?.name=selectedName;
+                                currentUser?.insert();
+                              });
+                            }, keyboardType: TextInputType.text);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ),
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 3,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('體重', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: weightController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    filled: true,
-                    hintText: '輸入體重 (kg)',
-                  ),
-                  onChanged: (value) => setState(() => selectedWeight = value),
+                const Divider(),
+
+                // 身高
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('身高', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Row(
+                      children: [
+                        Text(selectedHeight != null && selectedHeight!.isNotEmpty ? '${selectedHeight} cm' : '未設定'),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () {
+                            _showEditDialog('身高 (cm)', selectedHeight, (val) {
+                              setState(()  {
+                                selectedHeight = val;
+                                currentUser?.height=double.parse(selectedHeight!);
+                                currentUser?.insert();
+                              });
+                            }, keyboardType: TextInputType.number);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Divider(),
+
+                // 體重
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('體重', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Row(
+                      children: [
+                        Text(selectedWeight != null && selectedWeight!.isNotEmpty ? '${selectedWeight} kg' : '未設定'),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () {
+                            _showEditDialog('體重 (kg)', selectedWeight, (val) {
+                              setState(()  {
+                                selectedWeight = val;
+                                currentUser?.weight=double.parse(selectedWeight!);
+                                currentUser?.insert();
+                              });
+                            }, keyboardType: TextInputType.number);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -585,6 +641,39 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         )
       ],
+    );
+  }
+
+
+
+  Future<void> _showEditDialog(String title, String? currentValue, Function(String) onSave, {TextInputType keyboardType = TextInputType.text}) async {
+    _editController.text = currentValue ?? '';
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('編輯 $title'),
+        content: TextField(
+          autofocus: true,
+          controller: _editController,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: '請輸入 $title',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              onSave(_editController.text.trim());
+              Navigator.of(context).pop();
+            },
+            child: const Text('儲存'),
+          ),
+        ],
+      ),
     );
   }
 }
