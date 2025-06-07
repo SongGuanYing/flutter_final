@@ -48,10 +48,12 @@ class RoutePage extends StatefulWidget {
 }
 
 class _RoutePageState extends State<RoutePage> {
-  String _selectedFilter = '全部';
-  final List<String> _filterOptions = ['全部', '初學者', '中級', '進階', '環狀', '單程'];
+  String? _selectedDifficulty;
+  String? _selectedType;
+  final List<String> _difficultyOptions = ['初學者', '中級', '進階'];
+  final List<String> _typeOptions = ['環狀', '單程'];
 
-  // 模擬推薦路線數據
+  // 模擬推薦路線數據 - 增加更多路線選擇
   final List<RouteData> mockRoutes = [
     RouteData(
       id: '1',
@@ -104,6 +106,159 @@ class _RoutePageState extends State<RoutePage> {
       surfaceType: '石板步道',
       isLoop: false,
     ),
+    RouteData(
+      id: '4',
+      name: '校園慢跑環線',
+      distance: 2.8,
+      estimatedDuration: 28,
+      difficulty: '初學者',
+      elevation: 5.0,
+      tags: ['校園', '安全', '夜跑'],
+      rating: 4.1,
+      reviewCount: 96,
+      description: '大學校園內的慢跑路線，路燈充足，安全性高，適合晚上跑步。路面平坦，適合初學者建立跑步習慣。',
+      startPoint: '校門口',
+      endPoint: '校門口',
+      highlights: ['路燈充足', '安全環境', '便利商店', '停車方便'],
+      surfaceType: '柏油路面',
+      isLoop: true,
+    ),
+    RouteData(
+      id: '5',
+      name: '城市步道探索線',
+      distance: 6.5,
+      estimatedDuration: 65,
+      difficulty: '中級',
+      elevation: 45.0,
+      tags: ['城市', '步道', '景觀'],
+      rating: 4.4,
+      reviewCount: 73,
+      description: '穿越城市各個特色區域的步道路線，有小幅度爬升，可以欣賞不同的城市風貌和建築特色。',
+      startPoint: '中央車站',
+      endPoint: '藝術園區',
+      highlights: ['城市景觀', '建築特色', '咖啡廳', '文化景點'],
+      surfaceType: '人行步道',
+      isLoop: false,
+    ),
+    RouteData(
+      id: '6',
+      name: '海岸線晨跑路線',
+      distance: 7.2,
+      estimatedDuration: 72,
+      difficulty: '中級',
+      elevation: 25.0,
+      tags: ['海岸', '晨跑', '海風'],
+      rating: 4.8,
+      reviewCount: 156,
+      description: '沿著美麗海岸線的晨跑路線，可以享受清新海風和日出美景。略有起伏但不會太累，是很受歡迎的路線。',
+      startPoint: '海濱公園',
+      endPoint: '漁港',
+      highlights: ['海景', '日出', '海風', '漁港風情'],
+      surfaceType: '木棧道',
+      isLoop: false,
+    ),
+    RouteData(
+      id: '7',
+      name: '森林步道環線',
+      distance: 4.2,
+      estimatedDuration: 45,
+      difficulty: '中級',
+      elevation: 80.0,
+      tags: ['森林', '自然', '芬多精'],
+      rating: 4.6,
+      reviewCount: 67,
+      description: '森林公園內的環狀步道，在樹林間跑步可以享受芬多精和自然美景。有適度坡度變化，適合中級跑者。',
+      startPoint: '森林公園入口',
+      endPoint: '森林公園入口',
+      highlights: ['森林浴', '芬多精', '野生動物', '涼爽環境'],
+      surfaceType: '石板步道',
+      isLoop: true,
+    ),
+    RouteData(
+      id: '8',
+      name: '運動公園大環線',
+      distance: 3.8,
+      estimatedDuration: 38,
+      difficulty: '初學者',
+      elevation: 10.0,
+      tags: ['運動公園', '設施完善', '平坦'],
+      rating: 4.3,
+      reviewCount: 112,
+      description: '運動公園內的大環線，設施完善，有飲水機、廁所和休息區。地勢平坦，非常適合初學者和家庭跑步。',
+      startPoint: '運動中心',
+      endPoint: '運動中心',
+      highlights: ['運動設施', '飲水機', '廁所', '兒童遊樂區'],
+      surfaceType: '跑道',
+      isLoop: true,
+    ),
+    RouteData(
+      id: '9',
+      name: '古蹟文化路線',
+      distance: 5.8,
+      estimatedDuration: 58,
+      difficulty: '中級',
+      elevation: 40.0,
+      tags: ['古蹟', '文化', '歷史'],
+      rating: 4.2,
+      reviewCount: 89,
+      description: '經過多個古蹟和文化景點的路線，在跑步的同時可以欣賞歷史建築和文化遺產。有小幅爬升但不會太困難。',
+      startPoint: '古城門',
+      endPoint: '文化館',
+      highlights: ['古蹟建築', '文化景點', '歷史解說', '拍照景點'],
+      surfaceType: '石磚路面',
+      isLoop: false,
+    ),
+    RouteData(
+      id: '10',
+      name: '極限山徑挑戰',
+      distance: 8.5,
+      estimatedDuration: 95,
+      difficulty: '進階',
+      elevation: 200.0,
+      tags: ['山徑', '極限', '挑戰'],
+      rating: 4.9,
+      reviewCount: 34,
+      description: '高難度的山徑路線，適合有經驗的跑者挑戰。路線包含陡峭爬升和技術性路段，但山頂景色絕對值得。',
+      startPoint: '登山口停車場',
+      endPoint: '山頂觀景台',
+      highlights: ['絕佳山景', '挑戰性路段', '成就感', '野生動植物'],
+      surfaceType: '山徑小路',
+      isLoop: false,
+    ),
+    RouteData(
+      id: '11',
+      name: '夜市美食環線',
+      distance: 3.5,
+      estimatedDuration: 35,
+      difficulty: '初學者',
+      elevation: 8.0,
+      tags: ['夜市', '美食', '熱鬧'],
+      rating: 4.0,
+      reviewCount: 145,
+      description: '繞行熱鬧夜市周邊的路線，跑完可以直接享受美食！路線平坦好跑，適合想要跑步後享受美食的跑者。',
+      startPoint: '夜市入口',
+      endPoint: '夜市入口',
+      highlights: ['夜市美食', '熱鬧氣氛', '路燈充足', '交通便利'],
+      surfaceType: '柏油路面',
+      isLoop: true,
+    ),
+    RouteData(
+      id: '12',
+      name: '鐵馬道長征',
+      distance: 12.0,
+      estimatedDuration: 110,
+      difficulty: '進階',
+      elevation: 60.0,
+      tags: ['長距離', '鐵馬道', '耐力'],
+      rating: 4.5,
+      reviewCount: 28,
+      description: '長距離的鐵馬道路線，適合進階跑者進行耐力訓練。沿途風景多變，是挑戰個人極限的好選擇。',
+      startPoint: '鐵馬道起點',
+      endPoint: '終點休息站',
+      highlights: ['長距離挑戰', '多變風景', '耐力訓練', '休息補給站'],
+      surfaceType: '自行車道',
+      isLoop: false,
+    ),
   ];
 
   // 模擬已儲存路線數據
@@ -147,10 +302,20 @@ class _RoutePageState extends State<RoutePage> {
   ];
 
   List<RouteData> get filteredRoutes {
-    if (_selectedFilter == '全部') return mockRoutes;
-    if (_selectedFilter == '環狀') return mockRoutes.where((r) => r.isLoop).toList();
-    if (_selectedFilter == '單程') return mockRoutes.where((r) => !r.isLoop).toList();
-    return mockRoutes.where((r) => r.difficulty == _selectedFilter).toList();
+    List<RouteData> filtered = mockRoutes;
+
+    // 根據難度篩選
+    if (_selectedDifficulty != null) {
+      filtered = filtered.where((r) => r.difficulty == _selectedDifficulty).toList();
+    }
+
+    // 根據類型篩選
+    if (_selectedType != null) {
+      bool isLoop = _selectedType == '環狀';
+      filtered = filtered.where((r) => r.isLoop == isLoop).toList();
+    }
+
+    return filtered;
   }
 
   @override
@@ -186,29 +351,114 @@ class _RoutePageState extends State<RoutePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('篩選路線', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('篩選路線', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedDifficulty = null;
+                      _selectedType = null;
+                    });
+                  },
+                  child: const Text('清除篩選'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 難度篩選
+            const Text('難度等級', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              children: _filterOptions.map((filter) =>
+              children: _difficultyOptions.map((difficulty) =>
                   ChoiceChip(
-                    label: Text(filter),
-                    selected: _selectedFilter == filter,
+                    label: Text(difficulty),
+                    selected: _selectedDifficulty == difficulty,
                     onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedFilter = filter;
-                        });
-                      }
+                      setState(() {
+                        _selectedDifficulty = selected ? difficulty : null;
+                      });
                     },
-                    selectedColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                    selectedColor: _getDifficultyColor(difficulty).withOpacity(0.3),
+                    labelStyle: TextStyle(
+                      color: _selectedDifficulty == difficulty ? _getDifficultyColor(difficulty) : null,
+                      fontWeight: _selectedDifficulty == difficulty ? FontWeight.bold : null,
+                    ),
                   )
               ).toList(),
             ),
+            const SizedBox(height: 16),
+
+            // 路線類型篩選
+            const Text('路線類型', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8.0,
+              children: _typeOptions.map((type) =>
+                  ChoiceChip(
+                    label: Text(type),
+                    selected: _selectedType == type,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedType = selected ? type : null;
+                      });
+                    },
+                    selectedColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                    labelStyle: TextStyle(
+                      color: _selectedType == type ? Theme.of(context).primaryColor : null,
+                      fontWeight: _selectedType == type ? FontWeight.bold : null,
+                    ),
+                  )
+              ).toList(),
+            ),
+
+            // 顯示當前篩選結果
+            if (_selectedDifficulty != null || _selectedType != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.filter_list, size: 16, color: Colors.blue[700]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '篩選結果：${filteredRoutes.length} 條路線',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Color _getDifficultyColor(String difficulty) {
+    switch (difficulty) {
+      case '初學者':
+        return Colors.green;
+      case '中級':
+        return Colors.orange;
+      case '進階':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildRecommendedRoutesSection() {
@@ -418,20 +668,7 @@ class _RoutePageState extends State<RoutePage> {
   }
 
   Widget _buildDifficultyChip(String difficulty) {
-    Color color;
-    switch (difficulty) {
-      case '初學者':
-        color = Colors.green;
-        break;
-      case '中級':
-        color = Colors.orange;
-        break;
-      case '進階':
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey;
-    }
+    Color color = _getDifficultyColor(difficulty);
 
     return Chip(
       label: Text(difficulty, style: const TextStyle(fontSize: 12)),
