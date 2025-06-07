@@ -70,6 +70,11 @@ class DatabaseHelper {
                 FOREIGN KEY (userID) REFERENCES user(userID)
               )
             ''');
+            await db.execute('''
+              CREATE TABLE currentUser (
+                userID VARCHAR(50) PRIMARY KEY
+              )
+            ''');
           } catch (e) {
             print('建立資料表失敗: $e');
             rethrow; // 拋出異常以便進一步除錯

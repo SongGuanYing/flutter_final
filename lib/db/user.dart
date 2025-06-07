@@ -74,6 +74,21 @@ class User {
     return null;
   }
 
+  static Future<User?> verifyLogin(String userID, String password) async {
+    final db = await DatabaseHelper.instance.database; // 使用單例資料庫
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user',
+      where: 'userID = ? AND password = ?',
+      whereArgs: [userID, password],
+    );
+    if (maps.isNotEmpty) {
+      print("login sucess");
+      return User.fromMap(maps.first);
+    }
+    print("login fail");
+    return null;
+  }
+
   Future<void> update() async {
     final db = await DatabaseHelper.instance.database; // 使用單例資料庫
     await db.update(
