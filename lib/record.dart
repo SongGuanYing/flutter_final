@@ -164,6 +164,14 @@ class _RecordPageState extends State<RecordPage> {
     }
   }
 
+  // 新增：刪除單筆記錄的方法
+  Future<void> _deleteRunRecord(int index) async {
+    setState(() {
+      _runHistory.removeAt(index);
+    });
+    await _saveHistoryToFile();
+  }
+
   void _saveRunRecord() {
     final avgHeartRate = _heartRateHistory.isNotEmpty
         ? (_heartRateHistory.reduce((a, b) => a + b) / _heartRateHistory.length).round()
@@ -388,7 +396,10 @@ class _RecordPageState extends State<RecordPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => RunHistoryPage(records: _runHistory),
+          builder: (context) => RunHistoryPage(
+            records: _runHistory,
+            onDeleteRecord: _deleteRunRecord, // 傳遞刪除函數
+          ),
         ),
       );
     } else {
@@ -560,23 +571,290 @@ class _RecordPageState extends State<RecordPage> {
   Widget _buildControlButton({required IconData icon, required VoidCallback onPressed, required Color backgroundColor, double size = 30}) => Container(decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle, boxShadow: [BoxShadow(color: backgroundColor.withAlpha(77), blurRadius: 8, offset: const Offset(0, 4))]), child: ElevatedButton(onPressed: onPressed, style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20), shape: const CircleBorder(), backgroundColor: backgroundColor, foregroundColor: Colors.white, elevation: 0), child: Icon(icon, size: size)));
 }
 
-// ------------------- 歷史紀錄與詳情頁面 (無變動) -------------------
-class RunHistoryPage extends StatelessWidget {
+// ------------------- 歷史紀錄頁面 (已修改：加入刪除功能) -------------------
+class RunHistoryPage extends StatefulWidget {
   final List<RunRecord> records;
-  const RunHistoryPage({super.key, required this.records});
+  final Function(int) onDeleteRecord; // 刪除記錄的回調函數
+
+  const RunHistoryPage({
+    super.key,
+    required this.records,
+    required this.onDeleteRecord
+  });
+
+  @override
+  State<RunHistoryPage> createState() => _RunHistoryPageState();
+}
+
+class _RunHistoryPageState extends State<RunHistoryPage> {
+  Future<void> _showDeleteConfirmDialog(int index) async {
+    final record = widget.records[index];
+    final String formattedDate = DateFormat('yyyy/MM/dd HH:mm').format(record.date);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('確認刪除'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('確定要刪除這筆運動記錄嗎？'),
+                const SizedBox(height: 8),
+                Text(
+                  '日期：$formattedDate\n距離：${(record.distance / 1000).toStringAsFixed(2)} 公里',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('刪除', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteRecord(index);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteRecord(int index) {
+    widget.onDeleteRecord(index);
+    setState(() {
+      // 觸發 UI 更新
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('運動記錄已刪除'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('運動歷史記錄'), backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white), body: ListView.builder(padding: const EdgeInsets.symmetric(vertical: 8.0), itemCount: records.length, itemBuilder: (context, index) { final record = records[index]; final String formattedDate = DateFormat('yyyy/MM/dd HH:mm').format(record.date); return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), elevation: 3, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), child: ListTile(contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.directions_run, color: Theme.of(context).primaryColor, size: 28)]), title: Text('${(record.distance / 1000).toStringAsFixed(2)} 公里', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), subtitle: Text('$formattedDate\n時間: ${record.duration} | 配速: ${record.pace}/km', style: TextStyle(color: Colors.grey[600])), trailing: const Icon(Icons.chevron_right, color: Colors.grey), isThreeLine: true, onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context) => RunDetailPage(record: record)));}));}));
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('運動歷史記錄'),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+      ),
+      body: widget.records.isEmpty
+          ? const Center(
+        child: Text(
+          '目前沒有任何運動記錄',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+        ),
+      )
+          : ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        itemCount: widget.records.length,
+        itemBuilder: (context, index) {
+          final record = widget.records[index];
+          final String formattedDate = DateFormat('yyyy/MM/dd HH:mm').format(record.date);
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              leading: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.directions_run,
+                    color: Theme.of(context).primaryColor,
+                    size: 28,
+                  ),
+                ],
+              ),
+              title: Text(
+                '${(record.distance / 1000).toStringAsFixed(2)} 公里',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              subtitle: Text(
+                '$formattedDate\n時間: ${record.duration} | 配速: ${record.pace}/km',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _showDeleteConfirmDialog(index),
+                    tooltip: '刪除記錄',
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.grey),
+                ],
+              ),
+              isThreeLine: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RunDetailPage(record: record),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 }
+
+// ------------------- 運動詳情頁面 (已修改：加入刪除按鈕) -------------------
 class RunDetailPage extends StatelessWidget {
   final RunRecord record;
+
   const RunDetailPage({super.key, required this.record});
+
   @override
   Widget build(BuildContext context) {
-    final String formattedDate = DateFormat('yyyy年MM月dd日 HH:mm').format(record.date); return Scaffold(appBar: AppBar(title: Text(formattedDate), backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white), body: Padding(padding: const EdgeInsets.all(16.0), child: Card(elevation: 4.0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: Padding(padding: const EdgeInsets.symmetric(vertical: 24.0), child: Column(mainAxisSize: MainAxisSize.min, children: [_buildDetailRow(context, icon: Icons.straighten, label: '總距離', value: '${(record.distance / 1000).toStringAsFixed(2)} km', color: Colors.green), const Divider(indent: 20, endIndent: 20), _buildDetailRow(context, icon: Icons.timer, label: '運動時間', value: record.duration, color: Colors.blue), const Divider(indent: 20, endIndent: 20), _buildDetailRow(context, icon: Icons.speed, label: '平均配速', value: '${record.pace} /km', color: Colors.orange), const Divider(indent: 20, endIndent: 20), _buildDetailRow(context, icon: Icons.favorite, label: '平均心率', value: '${record.avgHeartRate} BPM', color: Colors.red), const Divider(indent: 20, endIndent: 20), _buildDetailRow(context, icon: Icons.whatshot, label: '最高心率', value: '${record.maxHeartRate} BPM', color: Colors.redAccent)])))));
+    final String formattedDate = DateFormat('yyyy年MM月dd日 HH:mm').format(record.date);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(formattedDate),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => _showDeleteConfirmDialog(context),
+            tooltip: '刪除記錄',
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Card(
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow(
+                  context,
+                  icon: Icons.speed,
+                  label: '平均配速',
+                  value: '${record.pace} /km',
+                  color: Colors.orange,
+                ),
+                const Divider(indent: 20, endIndent: 20),
+                _buildDetailRow(
+                  context,
+                  icon: Icons.favorite,
+                  label: '平均心率',
+                  value: '${record.avgHeartRate} BPM',
+                  color: Colors.red,
+                ),
+                const Divider(indent: 20, endIndent: 20),
+                _buildDetailRow(
+                  context,
+                  icon: Icons.whatshot,
+                  label: '最高心率',
+                  value: '${record.maxHeartRate} BPM',
+                  color: Colors.redAccent,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
-  Widget _buildDetailRow(BuildContext context, {required IconData icon, required String label, required String value, required Color color}) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0), child: Row(children: [Icon(icon, color: color, size: 28), const SizedBox(width: 20), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)), const SizedBox(height: 4), Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20))])]));
+
+  Future<void> _showDeleteConfirmDialog(BuildContext context) async {
+    final String formattedDate = DateFormat('yyyy/MM/dd HH:mm').format(record.date);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('確認刪除'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                const Text('確定要刪除這筆運動記錄嗎？'),
+                const SizedBox(height: 8),
+                Text(
+                  '日期：$formattedDate\n距離：${(record.distance / 1000).toStringAsFixed(2)} 公里',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('取消'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('刪除', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // 關閉對話框
+                Navigator.of(context).pop(); // 回到上一頁
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('請返回記錄列表進行刪除操作'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(width: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
