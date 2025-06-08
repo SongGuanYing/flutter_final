@@ -243,7 +243,9 @@ class _MainPageState extends State<MainPage> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const GpxFromAssetsPage()),
+                MaterialPageRoute(
+                  builder: (_) => const GpxFromAssetsPage(gpxAssetPath: 'assets/gpx/2023_10_26.gpx'),
+                ),
               );
               print('查看 2023/10/26 跑步詳細!');
             },
@@ -259,6 +261,12 @@ class _MainPageState extends State<MainPage> {
             subtitle: const Text('時間: 26:15, 配速: 8:45 / km', style: TextStyle(fontSize: 16)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GpxFromAssetsPage(gpxAssetPath: 'assets/gpx/2023_10_24.gpx'),
+                ),
+              );
               print('查看 2023/10/24 跑步詳細!');
             },
           ),
@@ -271,7 +279,9 @@ class _MainPageState extends State<MainPage> {
 // ----------------------- gpx
 
 class GpxFromAssetsPage extends StatefulWidget {
-  const GpxFromAssetsPage({super.key});
+  final String gpxAssetPath;
+
+  const GpxFromAssetsPage({super.key, required this.gpxAssetPath});
 
   @override
   State<GpxFromAssetsPage> createState() => _GpxFromAssetsPageState();
@@ -289,7 +299,7 @@ class _GpxFromAssetsPageState extends State<GpxFromAssetsPage> {
   }
 
   Future<void> _loadGpx() async {
-    final gpxString = await rootBundle.loadString('assets/gpx/2023_10_24.gpx');
+    final gpxString = await rootBundle.loadString(widget.gpxAssetPath);
     final gpx = GpxReader().fromString(gpxString);
 
     final pts = gpx.trks
@@ -305,7 +315,6 @@ class _GpxFromAssetsPageState extends State<GpxFromAssetsPage> {
         _bounds = bounds;
       });
 
-      // 延遲再 FitCamera，確保 Map 已初始化
       Future.delayed(Duration(milliseconds: 200), () {
         _mapController.fitCamera(
           CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(32)),
