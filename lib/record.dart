@@ -10,6 +10,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 
+import './db/db_init.dart';
+import './db/user.dart';
+import './db/run_record.dart';
+import './db/teach_data.dart';
+import './db/current_user.dart';
 
 // 為了讓程式碼能獨立運行，加上 main 函數和 MyApp
 void main() {
@@ -86,7 +91,7 @@ class _RecordPageState extends State<RecordPage> {
   // --- 所有狀態變數 ---
   final MapController _mapController = MapController();
   bool _isMetronomePlaying = false;
-  int _targetBPM = 150;
+  int? _targetBPM = 150;
   final int _baseBPM = 120;
   late AudioPlayer _metronomePlayer;
   bool _isAudioPlayerInitialized = false;
@@ -108,13 +113,16 @@ class _RecordPageState extends State<RecordPage> {
   StreamSubscription<Position>? _positionStreamSubscription;
   List<RunRecord> _runHistory = [];
 
+  User? currentUser;
+
 
   @override
   void initState() {
-    super.initState();
+    _loadCurrentUser();
     _initializeAudioPlayer();
     _checkAndRequestLocationPermission();
     _loadRunHistory();
+    super.initState();
   }
 
   @override
@@ -126,6 +134,16 @@ class _RecordPageState extends State<RecordPage> {
     }
     _positionStreamSubscription?.cancel();
     super.dispose();
+  }
+
+  void _loadCurrentUser() async {
+    currentUser = await User.getCurrentUser();
+    if (currentUser != null) {
+      setState(() {
+        _targetBPM = currentUser?.cadence;
+      });
+    }
+    print('使用者名稱: ${currentUser?.name}');
   }
 
   Future<String> get _localPath async {
@@ -352,7 +370,7 @@ class _RecordPageState extends State<RecordPage> {
   Future<void> _startMetronome() async {
     if (!_isAudioPlayerInitialized) return;
     try {
-      double playbackRate = (_targetBPM / _baseBPM).clamp(0.5, 2.0);
+      double playbackRate = (_targetBPM! / _baseBPM).clamp(0.5, 2.0);
       await _metronomePlayer.setPlaybackRate(playbackRate);
       await _metronomePlayer.play(AssetSource('audios/tick1.mp3'));
     } catch (e) {
@@ -379,11 +397,11 @@ class _RecordPageState extends State<RecordPage> {
 
   Future<void> _adjustBPM(int delta) async {
     setState(() {
-      _targetBPM = (_targetBPM + delta).clamp(60, 200);
+      _targetBPM = (_targetBPM! + delta).clamp(60, 200);
     });
     if (_isMetronomePlaying && _isAudioPlayerInitialized) {
       try {
-        double playbackRate = (_targetBPM / _baseBPM).clamp(0.5, 2.0);
+        double playbackRate = (_targetBPM! / _baseBPM).clamp(0.5, 2.0);
         await _metronomePlayer.setPlaybackRate(playbackRate);
       } catch (e) {
         print('調整播放速度失敗: $e');
