@@ -44,7 +44,12 @@ class RouteData {
 
 // 索引 4: 路線 - 路線推薦與詳細資料
 class RoutePage extends StatefulWidget {
-  const RoutePage({Key? key}) : super(key: key);
+  final Function(RouteData) onStartRoute; // 宣告一個函式類型的參數
+
+  const RoutePage({
+    Key? key,
+    required this.onStartRoute, // 設為必要參數
+  }) : super(key: key);
 
   @override
   _RoutePageState createState() => _RoutePageState();
@@ -74,6 +79,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['湖景', '涼亭休息點', '飲水機', '廁所'],
       surfaceType: '柏油路面',
       isLoop: true,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '2',
@@ -91,6 +97,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['河景', '橋樑景觀', '野鳥觀察', '健身設施'],
       surfaceType: '混合路面',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '3',
@@ -108,6 +115,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['山頂美景', '觀景台', '森林浴', '挑戰坡度'],
       surfaceType: '石板步道',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '4',
@@ -125,6 +133,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['路燈充足', '安全環境', '便利商店', '停車方便'],
       surfaceType: '柏油路面',
       isLoop: true,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '5',
@@ -142,6 +151,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['城市景觀', '建築特色', '咖啡廳', '文化景點'],
       surfaceType: '人行步道',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '6',
@@ -159,6 +169,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['海景', '日出', '海風', '漁港風情'],
       surfaceType: '木棧道',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '7',
@@ -176,6 +187,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['森林浴', '芬多精', '野生動物', '涼爽環境'],
       surfaceType: '石板步道',
       isLoop: true,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '8',
@@ -193,6 +205,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['運動設施', '飲水機', '廁所', '兒童遊樂區'],
       surfaceType: '跑道',
       isLoop: true,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '9',
@@ -210,6 +223,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['古蹟建築', '文化景點', '歷史解說', '拍照景點'],
       surfaceType: '石磚路面',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '10',
@@ -227,6 +241,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['絕佳山景', '挑戰性路段', '成就感', '野生動植物'],
       surfaceType: '山徑小路',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '11',
@@ -244,6 +259,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['夜市美食', '熱鬧氣氛', '路燈充足', '交通便利'],
       surfaceType: '柏油路面',
       isLoop: true,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: '12',
@@ -261,6 +277,7 @@ class _RoutePageState extends State<RoutePage> {
       highlights: ['長距離挑戰', '多變風景', '耐力訓練', '休息補給站'],
       surfaceType: '自行車道',
       isLoop: false,
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
   ];
 
@@ -283,6 +300,7 @@ class _RoutePageState extends State<RoutePage> {
       surfaceType: '柏油路面',
       isLoop: false,
       lastUsed: DateTime.now().subtract(Duration(days: 2)),
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
     RouteData(
       id: 's2',
@@ -301,6 +319,7 @@ class _RoutePageState extends State<RoutePage> {
       surfaceType: '跑道',
       isLoop: true,
       lastUsed: DateTime.now().subtract(Duration(days: 5)),
+      gpxPath: 'assets/gpx/route1.gpx',
     ),
   ];
 
@@ -888,17 +907,11 @@ class _RoutePageState extends State<RoutePage> {
 
   // 修改 _startRoute 方法，使用 Navigator.push 並傳遞路線參數
   void _startRoute(RouteData route) {
-    // 跳轉到RecordPage並傳入路線參數
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecordPage(
-          routeGpxPath: route.gpxPath,
-          routeName: route.name,
-        ),
-      ),
-    );
 
-    print('開始跑步: ${route.name}, GPX路徑: ${route.gpxPath}');
+
+    // 直接呼叫從父層 (HomeScreen) 傳進來的函式，並把路線資料傳回去
+    widget.onStartRoute(route);
+
+    print('觸發開始跑步: ${route.name}, GPX路徑: ${route.gpxPath}');
   }
 }

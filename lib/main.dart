@@ -54,9 +54,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 2; // 預設到 MainPage (首頁)
-
-
+  int _selectedIndex = 2;
+  final GlobalKey<RecordPageState> _recordPageKey = GlobalKey<RecordPageState>();
 
   final List<BottomNavigationBarItem> _bottomItems = const [
     BottomNavigationBarItem(icon: Icon(Icons.map), label: '路線'),
@@ -87,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // 使用者不能點外面關閉
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: const Text('登入'),
@@ -111,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final user = await User.verifyLogin('user1', 'password123');
                 if (user != null) {
                   await CurrentUser.setCurrentUser('user1');
-                  Navigator.of(context).pop(); // 關閉對話框
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('登入成功：user1')),
                   );
@@ -120,15 +119,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SnackBar(content: Text('帳號或密碼錯誤')),
                   );
                 }
-              }, // 關閉對話框
-              child: const Text(''),//取消按鈕
+              },
+              child: const Text(''),
             ),
             ElevatedButton(
               onPressed: () async {
                 final user = await User.verifyLogin(userID, password);
                 if (user != null) {
                   await CurrentUser.setCurrentUser(userID);
-                  Navigator.of(context).pop(); // 關閉對話框
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('登入成功：$userID')),
                   );
@@ -146,10 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 處理 BottomNavigationBar 項目點擊事件
   void _onItemTapped(int index) {
     setState(() {
-      // BottomNavigationBar 的索引從 0 開始，對應 _pages 列表中的索引 1-5
       _selectedIndex = index;
     });
   }
@@ -158,15 +155,28 @@ class _HomeScreenState extends State<HomeScreen> {
     _onItemTapped(1);
   }
 
+  // main.dart in _HomeScreenState
+
+  void _handleStartRoute(RouteData route) {
+    // 1. 加入 print 指令
+    print('[main.dart] 指令已發出：載入 ${route.name} 到 RecordPage。');
+    _recordPageKey.currentState?.loadNewRoute(route.gpxPath, route.name);
+    _onItemTapped(1);
+  }
+
+
+  // main.dart in _HomeScreenState
+
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pages = [
-      const RoutePage(),
-      const RecordPage(),
-      MainPage(onStartRun: () => _onItemTapped(1),),
+    final List<Widget> pages = [
+      RoutePage(onStartRoute: _handleStartRoute),
+      RecordPage(key: _recordPageKey),
+      MainPage(onStartRun: () => _onItemTapped(1)),
       const TeachPage(),
       const ProfilePage(),
     ];
+
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.directions_run_outlined, color: Colors.white),
@@ -190,13 +200,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: _pages[_selectedIndex],
+      // --- 核心修改在此 ---
+      // 將 body: pages[_selectedIndex],
+      // 換成 IndexedStack
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: pages,
+      ),
+      // ---------------------
       bottomNavigationBar: BottomNavigationBar(
         items: _bottomItems,
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         elevation: 8.0,

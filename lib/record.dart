@@ -93,10 +93,11 @@ class RecordPage extends StatefulWidget {
   });
 
   @override
-  State<RecordPage> createState() => _RecordPageState();
+  // 將 _RecordPageState 改為 RecordPageState
+  State<RecordPage> createState() => RecordPageState();
 }
 
-class _RecordPageState extends State<RecordPage> {
+class RecordPageState extends State<RecordPage> {
   // --- 所有狀態變數 ---
   final MapController _mapController = MapController();
   bool _isMetronomePlaying = false;
@@ -179,48 +180,30 @@ class _RecordPageState extends State<RecordPage> {
     _mapController.move(_mapController.camera.center, _currentZoom);
   }
 
+  // record.dart in RecordPageState
+
   Future<void> _loadGpxTrack(String gpxPath) async {
+    print('[record.dart] 進入 _loadGpxTrack 方法...');
     setState(() {
       _isLoadingGpx = true;
     });
 
     try {
-      // 從指定路徑載入 GPX 檔案
-      String gpxString = await rootBundle.loadString(gpxPath);
-
-      // 解析 GPX 檔案
+      final gpxString = await rootBundle.loadString(gpxPath);
       final gpx = GpxReader().fromString(gpxString);
       List<LatLng> points = [];
 
-      // 提取軌跡點
       for (var track in gpx.trks) {
         for (var segment in track.trksegs) {
-          for (var point in segment.trkpts) {
-            if (point.lat != null && point.lon != null) {
-              points.add(LatLng(point.lat!, point.lon!));
-            }
-          }
+          points.addAll(segment.trkpts.map((pt) => LatLng(pt.lat!, pt.lon!)));
         }
       }
 
-      // 如果沒有軌跡，嘗試提取路線點
-      if (points.isEmpty) {
-        for (var route in gpx.rtes) {
-          for (var point in route.rtepts) {
-            if (point.lat != null && point.lon != null) {
-              points.add(LatLng(point.lat!, point.lon!));
-            }
-          }
-        }
-      }
+      // 3. 加入關鍵的 print 指令，確認解析結果
+      print('[record.dart] GPX 檔案解析成功，共找到 ${points.length} 個座標點。');
 
-      // 如果還是沒有點，嘗試提取航點
-      if (points.isEmpty) {
-        for (var waypoint in gpx.wpts) {
-          if (waypoint.lat != null && waypoint.lon != null) {
-            points.add(LatLng(waypoint.lat!, waypoint.lon!));
-          }
-        }
+      if (points.isNotEmpty) {
+        print('[record.dart] 第一個座標點是：${points.first}');
       }
 
       setState(() {
@@ -228,28 +211,17 @@ class _RecordPageState extends State<RecordPage> {
         _isLoadingGpx = false;
       });
 
-      print('成功載入GPX檔案：$gpxPath，路徑點數量: ${points.length}');
-
-      // 如果有GPX路徑點，將地圖中心設定到第一個點
       if (points.isNotEmpty) {
         _mapController.move(points.first, _currentZoom);
+        // 4. 確認地圖移動指令已發出
+        print('[record.dart] 地圖移動指令已發出，移至座標：${points.first}');
       }
 
     } catch (e) {
-      print('載入GPX檔案失敗: $e');
+      print('[record.dart] 載入或解析GPX檔案時發生嚴重錯誤: $e'); // <--- 檢查這裡是否有輸出
       setState(() {
         _isLoadingGpx = false;
       });
-
-      // 載入失敗時顯示錯誤訊息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('無法載入GPX檔案: $e'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
     }
   }
 
@@ -498,11 +470,14 @@ class _RecordPageState extends State<RecordPage> {
   }
 
   // 新增：供外部呼叫的方法，用於載入新路線
+
   void loadNewRoute(String gpxPath, String routeName) {
+    // 2. 加入 print 指令
+    print('[record.dart] RecordPage 收到指令，準備載入路徑：$gpxPath');
+
     _currentRouteName = routeName;
     _loadGpxTrack(gpxPath);
 
-    // 顯示路線切換提示
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('已載入路線：$routeName'),
