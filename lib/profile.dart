@@ -599,6 +599,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 20),
+        /*
         // 通用設定區塊 (單位、通知等)
         Card(
           elevation: 2.0,
@@ -629,6 +630,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 20),
+        */
         // 關於 App (範例)
         Card(
           elevation: 2.0,
