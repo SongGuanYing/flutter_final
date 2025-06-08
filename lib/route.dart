@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'record.dart';
 
 // 路線資料模型
 class RouteData {
@@ -18,6 +19,7 @@ class RouteData {
   final String surfaceType;
   final bool isLoop;
   final DateTime? lastUsed;
+  final String gpxPath; // 添加這個屬性
 
   RouteData({
     required this.id,
@@ -36,6 +38,7 @@ class RouteData {
     required this.surfaceType,
     required this.isLoop,
     this.lastUsed,
+    this.gpxPath = 'assets/gpx/route1.gpx', // 設置默認GPX路徑
   });
 }
 
@@ -883,11 +886,19 @@ class _RoutePageState extends State<RoutePage> {
     print('儲存路線: ${route.name}');
   }
 
+  // 修改 _startRoute 方法，使用 Navigator.push 並傳遞路線參數
   void _startRoute(RouteData route) {
-    // TODO: 實現開始跑步功能
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('開始跑步：${route.name}')),
+    // 跳轉到RecordPage並傳入路線參數
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecordPage(
+          routeGpxPath: route.gpxPath,
+          routeName: route.name,
+        ),
+      ),
     );
-    print('開始跑步: ${route.name}');
+
+    print('開始跑步: ${route.name}, GPX路徑: ${route.gpxPath}');
   }
 }

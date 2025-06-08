@@ -83,7 +83,14 @@ class RunRecord {
 
 // ------------------- 主要運動頁面 -------------------
 class RecordPage extends StatefulWidget {
-  const RecordPage({super.key});
+  final String? routeGpxPath; // 新增：GPX檔案路徑
+  final String? routeName;    // 新增：路線名稱
+
+  const RecordPage({
+    super.key,
+    this.routeGpxPath,
+    this.routeName,
+  });
 
   @override
   State<RecordPage> createState() => _RecordPageState();
@@ -116,6 +123,7 @@ class _RecordPageState extends State<RecordPage> {
   List<RunRecord> _runHistory = RunHistory.runHistory;
   List<LatLng> _gpxTrackPoints = [];
   bool _isLoadingGpx = false;
+  String? _currentRouteName;
   User? currentUser;
   double _currentZoom = 17.0; // 新增：當前縮放級別
 
@@ -125,8 +133,13 @@ class _RecordPageState extends State<RecordPage> {
     _initializeAudioPlayer();
     _checkAndRequestLocationPermission();
     _loadRunHistory();
-    _loadGpxTrack(); // 添加這行
-    //_runHistory=RunHistory.runHistory;
+
+    // 新增：如果有傳入路線參數才載入GPX
+    if (widget.routeGpxPath != null) {_loadGpxTrack(widget.routeGpxPath!);
+    }
+
+    _currentRouteName = widget.routeName;
+
     super.initState();
   }
 
@@ -166,14 +179,14 @@ class _RecordPageState extends State<RecordPage> {
     _mapController.move(_mapController.camera.center, _currentZoom);
   }
 
-  Future<void> _loadGpxTrack() async {
+  Future<void> _loadGpxTrack(String gpxPath) async {
     setState(() {
       _isLoadingGpx = true;
     });
 
     try {
-      // 從 assets 載入 GPX 檔案
-      String gpxString = await rootBundle.loadString('assets/gpx/route1.gpx');
+      // 從指定路徑載入 GPX 檔案
+      String gpxString = await rootBundle.loadString(gpxPath);
 
       // 解析 GPX 檔案
       final gpx = GpxReader().fromString(gpxString);
@@ -215,11 +228,11 @@ class _RecordPageState extends State<RecordPage> {
         _isLoadingGpx = false;
       });
 
-      print('成功載入GPX檔案，路徑點數量: ${points.length}');
+      print('成功載入GPX檔案：$gpxPath，路徑點數量: ${points.length}');
 
       // 如果有GPX路徑點，將地圖中心設定到第一個點
       if (points.isNotEmpty) {
-        _mapController.move(points.first, _currentZoom); // 修改：使用當前縮放級別
+        _mapController.move(points.first, _currentZoom);
       }
 
     } catch (e) {
@@ -482,6 +495,20 @@ class _RecordPageState extends State<RecordPage> {
     int minutes = (seconds / 60).floor();
     seconds = seconds % 60;
     return '${twoDigits(minutes)}:${twoDigits(seconds)}:${twoDigits(centiseconds)}';
+  }
+
+  // 新增：供外部呼叫的方法，用於載入新路線
+  void loadNewRoute(String gpxPath, String routeName) {
+    _currentRouteName = routeName;
+    _loadGpxTrack(gpxPath);
+
+    // 顯示路線切換提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('已載入路線：$routeName'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _updateDistanceAndPace() {
