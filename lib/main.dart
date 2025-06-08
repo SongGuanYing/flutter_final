@@ -172,6 +172,14 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: const Icon(Icons.directions_run_outlined, color: Colors.white),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        title: const Text(
+          '好腳步',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
