@@ -9,7 +9,8 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
-
+import 'package:gpx/gpx.dart';
+import 'package:flutter/services.dart';
 import './db/db_init.dart';
 import './db/user.dart';
 import './db/run_record.dart';
@@ -112,9 +113,10 @@ class _RecordPageState extends State<RecordPage> {
   LatLng? _currentLocation;
   StreamSubscription<Position>? _positionStreamSubscription;
   List<RunRecord> _runHistory = [];
-
+  List<LatLng> _gpxTrackPoints = [];
+  bool _isLoadingGpx = false;
   User? currentUser;
-
+  double _currentZoom = 17.0; // 新增：當前縮放級別
 
   @override
   void initState() {
@@ -122,6 +124,7 @@ class _RecordPageState extends State<RecordPage> {
     _initializeAudioPlayer();
     _checkAndRequestLocationPermission();
     _loadRunHistory();
+    _loadGpxTrack(); // 添加這行
     super.initState();
   }
 
@@ -144,6 +147,95 @@ class _RecordPageState extends State<RecordPage> {
       });
     }
     print('使用者名稱: ${currentUser?.name}');
+  }
+
+  // 新增：縮放方法
+  void _zoomIn() {
+    setState(() {
+      _currentZoom = (_currentZoom + 1).clamp(1.0, 20.0);
+    });
+    _mapController.move(_mapController.camera.center, _currentZoom);
+  }
+
+  void _zoomOut() {
+    setState(() {
+      _currentZoom = (_currentZoom - 1).clamp(1.0, 20.0);
+    });
+    _mapController.move(_mapController.camera.center, _currentZoom);
+  }
+
+  Future<void> _loadGpxTrack() async {
+    setState(() {
+      _isLoadingGpx = true;
+    });
+
+    try {
+      // 從 assets 載入 GPX 檔案
+      String gpxString = await rootBundle.loadString('assets/gpx/route1.gpx');
+
+      // 解析 GPX 檔案
+      final gpx = GpxReader().fromString(gpxString);
+      List<LatLng> points = [];
+
+      // 提取軌跡點
+      for (var track in gpx.trks) {
+        for (var segment in track.trksegs) {
+          for (var point in segment.trkpts) {
+            if (point.lat != null && point.lon != null) {
+              points.add(LatLng(point.lat!, point.lon!));
+            }
+          }
+        }
+      }
+
+      // 如果沒有軌跡，嘗試提取路線點
+      if (points.isEmpty) {
+        for (var route in gpx.rtes) {
+          for (var point in route.rtepts) {
+            if (point.lat != null && point.lon != null) {
+              points.add(LatLng(point.lat!, point.lon!));
+            }
+          }
+        }
+      }
+
+      // 如果還是沒有點，嘗試提取航點
+      if (points.isEmpty) {
+        for (var waypoint in gpx.wpts) {
+          if (waypoint.lat != null && waypoint.lon != null) {
+            points.add(LatLng(waypoint.lat!, waypoint.lon!));
+          }
+        }
+      }
+
+      setState(() {
+        _gpxTrackPoints = points;
+        _isLoadingGpx = false;
+      });
+
+      print('成功載入GPX檔案，路徑點數量: ${points.length}');
+
+      // 如果有GPX路徑點，將地圖中心設定到第一個點
+      if (points.isNotEmpty) {
+        _mapController.move(points.first, _currentZoom); // 修改：使用當前縮放級別
+      }
+
+    } catch (e) {
+      print('載入GPX檔案失敗: $e');
+      setState(() {
+        _isLoadingGpx = false;
+      });
+
+      // 載入失敗時顯示錯誤訊息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('無法載入GPX檔案: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   Future<String> get _localPath async {
@@ -322,14 +414,14 @@ class _RecordPageState extends State<RecordPage> {
     );
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((Position position) {
-      print('位置更新: ${position.latitude}, ${position.longitude}'); // 添加日誌
+      print('位置更新: ${position.latitude}, ${position.longitude}');
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       setState(() {
-        _currentLocation = newLocation; // 更新當前位置
+        _currentLocation = newLocation;
       });
-      _mapController.move(newLocation, 15.0); // 移動地圖到新位置
+      _mapController.move(newLocation, _currentZoom); // 修改：使用當前縮放級別
     }, onError: (e) {
-      print('位置更新錯誤: $e'); // 捕獲錯誤
+      print('位置更新錯誤: $e');
     });
   }
 
@@ -555,40 +647,154 @@ class _RecordPageState extends State<RecordPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // *** 主要修正區域 (地圖) ***
+              // 地圖區域（含縮放按鈕）
               Expanded(
                 child: Card(
                   elevation: 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   clipBehavior: Clip.antiAlias,
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      // [修正] 'center' -> 'initialCenter', 'zoom' -> 'initialZoom'
-                      initialCenter: mapCenter,
-                      initialZoom: 17.0,
-                    ),
+                  child: Stack(
                     children: [
-                      TileLayer(
-                        urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        // [註] 'subdomains' 參數已過時，通常可以直接移除
+                      // 地圖主體
+                      FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: mapCenter,
+                          initialZoom: _currentZoom,
+                          onMapEvent: (MapEvent mapEvent) {
+                            // 同步縮放級別
+                            if (mapEvent is MapEventMoveEnd) {
+                              setState(() {
+                                _currentZoom = _mapController.camera.zoom;
+                              });
+                            }
+                          },
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          ),
+                          // GPX 路徑顯示
+                          if (_gpxTrackPoints.isNotEmpty)
+                            PolylineLayer(
+                              polylines: [
+                                Polyline(
+                                  points: _gpxTrackPoints,
+                                  strokeWidth: 4.0,
+                                  color: Colors.blue,
+                                ),
+                              ],
+                            ),
+                          // 當前位置標記
+                          if (_currentLocation != null)
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  width: 80.0,
+                                  height: 80.0,
+                                  point: _currentLocation!,
+                                  child: Icon(
+                                    Icons.person_pin_circle,
+                                    color: Theme.of(context).primaryColor,
+                                    size: 40.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          // GPX 路徑起點和終點標記
+                          if (_gpxTrackPoints.isNotEmpty)
+                            MarkerLayer(
+                              markers: [
+                                // 起點標記
+                                Marker(
+                                  width: 60.0,
+                                  height: 60.0,
+                                  point: _gpxTrackPoints.first,
+                                  child: const Icon(
+                                    Icons.play_circle,
+                                    color: Colors.green,
+                                    size: 30.0,
+                                  ),
+                                ),
+                                // 終點標記
+                                if (_gpxTrackPoints.length > 1)
+                                  Marker(
+                                    width: 60.0,
+                                    height: 60.0,
+                                    point: _gpxTrackPoints.last,
+                                    child: const Icon(
+                                      Icons.flag,
+                                      color: Colors.red,
+                                      size: 30.0,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
                       ),
-                      if (_currentLocation != null)
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              width: 80.0,
-                              height: 80.0,
-                              point: _currentLocation!,
-                              // [修正] 'builder' -> 'child'
-                              child: Icon(
-                                Icons.person_pin_circle,
-                                color: Theme.of(context).primaryColor,
-                                size: 40.0,
+                      // 縮放控制按鈕
+                      Positioned(
+                        right: 16,
+                        top: 16,
+                        child: Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(51),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  // 放大按鈕
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _zoomIn,
+                                      child: Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: const BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(color: Colors.grey, width: 0.5),
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.add,
+                                          color: Colors.black54,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // 縮小按鈕
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _zoomOut,
+                                      child: Container(
+                                        width: 40,
+                                        height: 40,
+                                        child: const Icon(
+                                          Icons.remove,
+                                          color: Colors.black54,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -637,19 +843,15 @@ class _RecordPageState extends State<RecordPage> {
     );
   }
 
-  // --- UI Helper Widgets (修正 withOpacity) ---
+  // --- UI Helper Widgets ---
   Widget _buildDataColumn(String label, String value, Color color, {double fontSize = 24}) => Column(children: [Text(label, style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)), const SizedBox(height: 8), Text(value, style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold, color: color))]);
 
-  // [修正] withOpacity -> withAlpha
   Widget _buildBPMButton(IconData icon, VoidCallback onPressed) => Container(decoration: BoxDecoration(color: Theme.of(context).primaryColor.withAlpha(26), borderRadius: BorderRadius.circular(8)), child: IconButton(icon: Icon(icon), onPressed: onPressed, color: Theme.of(context).primaryColor, iconSize: 20));
 
-  // [修正] withOpacity -> withAlpha
   Widget _buildBPMDisplay() => Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: _isAudioPlayerInitialized ? Theme.of(context).primaryColor.withAlpha(26) : Colors.grey.withAlpha(77), borderRadius: BorderRadius.circular(12), border: Border.all(color: _isMetronomePlaying ? Theme.of(context).primaryColor : Colors.grey.withAlpha(128), width: 2)), child: Column(children: [Text('$_targetBPM', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _isAudioPlayerInitialized ? Theme.of(context).primaryColor : Colors.grey)), Text('BPM', style: TextStyle(fontSize: 12, color: _isAudioPlayerInitialized ? Theme.of(context).primaryColor : Colors.grey))]));
 
-  // [修正] withOpacity -> withAlpha
   Widget _buildMetronomeButton() => Container(decoration: BoxDecoration(color: _isMetronomePlaying ? Colors.red.withAlpha(26) : Theme.of(context).primaryColor.withAlpha(26), borderRadius: BorderRadius.circular(8)), child: IconButton(icon: Icon(_isMetronomePlaying ? Icons.pause : Icons.play_arrow), onPressed: _isAudioPlayerInitialized ? _toggleMetronome : null, color: _isMetronomePlaying ? Colors.red : Theme.of(context).primaryColor, iconSize: 28));
 
-  // [修正] withOpacity -> withAlpha
   Widget _buildControlButton({required IconData icon, required VoidCallback onPressed, required Color backgroundColor, double size = 30}) => Container(decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle, boxShadow: [BoxShadow(color: backgroundColor.withAlpha(77), blurRadius: 8, offset: const Offset(0, 4))]), child: ElevatedButton(onPressed: onPressed, style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20), shape: const CircleBorder(), backgroundColor: backgroundColor, foregroundColor: Colors.white, elevation: 0), child: Icon(icon, size: size)));
 }
 
