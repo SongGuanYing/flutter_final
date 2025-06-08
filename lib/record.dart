@@ -16,6 +16,7 @@ import './db/user.dart';
 import './db/run_record.dart';
 import './db/teach_data.dart';
 import './db/current_user.dart';
+import 'run_history.dart';
 
 // 為了讓程式碼能獨立運行，加上 main 函數和 MyApp
 void main() {
@@ -112,7 +113,7 @@ class _RecordPageState extends State<RecordPage> {
   int _maxHeartRate = 75;
   LatLng? _currentLocation;
   StreamSubscription<Position>? _positionStreamSubscription;
-  List<RunRecord> _runHistory = [];
+  List<RunRecord> _runHistory = RunHistory.runHistory;
   List<LatLng> _gpxTrackPoints = [];
   bool _isLoadingGpx = false;
   User? currentUser;
@@ -125,6 +126,7 @@ class _RecordPageState extends State<RecordPage> {
     _checkAndRequestLocationPermission();
     _loadRunHistory();
     _loadGpxTrack(); // 添加這行
+    //_runHistory=RunHistory.runHistory;
     super.initState();
   }
 
@@ -253,7 +255,7 @@ class _RecordPageState extends State<RecordPage> {
       final file = await _localFile;
       if (!await file.exists()) {
         print("檔案不存在，建立初始資料");
-        _createInitialData();
+        //_createInitialData();
         await _saveHistoryToFile();
         print("初始資料已建立，記錄數量: ${_runHistory.length}");
         return;
@@ -261,7 +263,7 @@ class _RecordPageState extends State<RecordPage> {
       final contents = await file.readAsString();
       if (contents.trim().isEmpty || contents == '[]') {
         print("檔案為空，建立初始資料");
-        _createInitialData();
+        //_createInitialData();
         await _saveHistoryToFile();
         return;
       }
@@ -272,7 +274,7 @@ class _RecordPageState extends State<RecordPage> {
       print("載入記錄數量: ${_runHistory.length}");
     } catch (e) {
       print("讀取記錄時發生錯誤: $e，建立初始資料");
-      _createInitialData();
+      //_createInitialData();
       await _saveHistoryToFile();
     }
   }
@@ -287,7 +289,7 @@ class _RecordPageState extends State<RecordPage> {
     }
   }
 
-  void _createInitialData() {
+  /*void _createInitialData() {
     final now = DateTime.now();
     setState(() {
       _runHistory = [
@@ -333,7 +335,7 @@ class _RecordPageState extends State<RecordPage> {
         ),
       ];
     });
-  }
+  }*/
 
   // 新增：刪除單筆記錄的方法
   Future<void> _deleteRunRecord(int index) async {
