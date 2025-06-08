@@ -322,11 +322,14 @@ class _RecordPageState extends State<RecordPage> {
     );
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((Position position) {
+      print('位置更新: ${position.latitude}, ${position.longitude}'); // 添加日誌
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       setState(() {
-        _currentLocation = newLocation;
+        _currentLocation = newLocation; // 更新當前位置
       });
-      _mapController.move(newLocation, 19.0);
+      _mapController.move(newLocation, 15.0); // 移動地圖到新位置
+    }, onError: (e) {
+      print('位置更新錯誤: $e'); // 捕獲錯誤
     });
   }
 
