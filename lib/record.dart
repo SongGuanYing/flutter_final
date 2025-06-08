@@ -274,53 +274,7 @@ class RecordPageState extends State<RecordPage> {
     }
   }
 
-  /*void _createInitialData() {
-    final now = DateTime.now();
-    setState(() {
-      _runHistory = [
-        RunRecord(
-          date: now.subtract(const Duration(days: 1)),
-          duration: '25:30',
-          distance: 3200.0,
-          pace: '07:58',
-          avgHeartRate: 145,
-          maxHeartRate: 162,
-        ),
-        RunRecord(
-          date: now.subtract(const Duration(days: 3)),
-          duration: '18:45',
-          distance: 2400.0,
-          pace: '07:48',
-          avgHeartRate: 138,
-          maxHeartRate: 155,
-        ),
-        RunRecord(
-          date: now.subtract(const Duration(days: 5)),
-          duration: '32:15',
-          distance: 4100.0,
-          pace: '07:52',
-          avgHeartRate: 142,
-          maxHeartRate: 158,
-        ),
-        RunRecord(
-          date: now.subtract(const Duration(days: 7)),
-          duration: '15:20',
-          distance: 2000.0,
-          pace: '07:40',
-          avgHeartRate: 140,
-          maxHeartRate: 152,
-        ),
-        RunRecord(
-          date: now.subtract(const Duration(days: 10)),
-          duration: '40:30',
-          distance: 5200.0,
-          pace: '07:47',
-          avgHeartRate: 148,
-          maxHeartRate: 165,
-        ),
-      ];
-    });
-  }*/
+  
 
   // 新增：刪除單筆記錄的方法
   Future<void> _deleteRunRecord(int index) async {
@@ -590,6 +544,8 @@ class RecordPageState extends State<RecordPage> {
     }
   }
 
+  // record.dart in RecordPageState
+
   @override
   Widget build(BuildContext context) {
     final LatLng mapCenter = _currentLocation ?? LatLng(23.4792, 120.4497);
@@ -606,7 +562,8 @@ class RecordPageState extends State<RecordPage> {
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  // 修改：將垂直內距從 20.0 縮小為 16.0
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Column(
                     children: [
                       Text(
@@ -618,7 +575,8 @@ class RecordPageState extends State<RecordPage> {
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      // 修改：將垂直間距從 20 縮小為 16
+                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -631,13 +589,15 @@ class RecordPageState extends State<RecordPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              // 修改：將垂直間距從 16 縮小為 12
+              const SizedBox(height: 12),
               // 節拍器控制卡
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  // 修改：將內距從 16.0 縮小為 12.0
+                  padding: const EdgeInsets.all(12.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -650,8 +610,9 @@ class RecordPageState extends State<RecordPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // 地圖區域（含縮放按鈕）
+              // 修改：將垂直間距從 16 縮小為 12
+              const SizedBox(height: 12),
+              // 地圖區域（此區塊會因上方空間縮小而自動變大）
               Expanded(
                 child: Card(
                   elevation: 4,
@@ -666,7 +627,6 @@ class RecordPageState extends State<RecordPage> {
                           initialCenter: mapCenter,
                           initialZoom: _currentZoom,
                           onMapEvent: (MapEvent mapEvent) {
-                            // 同步縮放級別
                             if (mapEvent is MapEventMoveEnd) {
                               setState(() {
                                 _currentZoom = _mapController.camera.zoom;
@@ -709,7 +669,6 @@ class RecordPageState extends State<RecordPage> {
                           if (_gpxTrackPoints.isNotEmpty)
                             MarkerLayer(
                               markers: [
-                                // 起點標記
                                 Marker(
                                   width: 60.0,
                                   height: 60.0,
@@ -720,7 +679,6 @@ class RecordPageState extends State<RecordPage> {
                                     size: 30.0,
                                   ),
                                 ),
-                                // 終點標記
                                 if (_gpxTrackPoints.length > 1)
                                   Marker(
                                     width: 60.0,
@@ -756,7 +714,6 @@ class RecordPageState extends State<RecordPage> {
                               ),
                               child: Column(
                                 children: [
-                                  // 放大按鈕
                                   Material(
                                     color: Colors.transparent,
                                     child: InkWell(
@@ -777,7 +734,6 @@ class RecordPageState extends State<RecordPage> {
                                       ),
                                     ),
                                   ),
-                                  // 縮小按鈕
                                   Material(
                                     color: Colors.transparent,
                                     child: InkWell(
@@ -803,16 +759,19 @@ class RecordPageState extends State<RecordPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              // 修改：將垂直間距從 16 縮小為 12
+              const SizedBox(height: 12),
               // 查看歷史記錄按鈕
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 60.0),
+                // 修改：將水平邊距從 60.0 縮小為 40.0，讓按鈕寬一點
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.history),
                   label: const Text('查看運動記錄'),
                   onPressed: _navigateToHistoryPage,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    // 修改：將垂直內距從 12 縮小為 10
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     foregroundColor: Theme.of(context).primaryColor,
                     side: BorderSide(color: Theme.of(context).primaryColor),
                     shape: RoundedRectangleBorder(
@@ -821,7 +780,8 @@ class RecordPageState extends State<RecordPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              // 修改：將垂直間距從 16 縮小為 12
+              const SizedBox(height: 12),
               // 主要控制按鈕
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
