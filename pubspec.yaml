@@ -27,6 +27,7 @@ dependencies:
   url_launcher: ^6.1.11
   flutter_phoenix: ^1.0.0
   http: ^1.4.0
+  gpx: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +41,4 @@ flutter:
     - assets/map.jpg
     - assets/flutter.png
     - assets/audios/
+    - assets/gpx/

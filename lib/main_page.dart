@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_final/record.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
+import 'package:gpx/gpx.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.onStartRun}) : super(key: key);
@@ -238,6 +241,12 @@ class _MainPageState extends State<MainPage> {
             subtitle: const Text('時間: 30:00, 配速: 8:30 / km', style: TextStyle(fontSize: 16)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GpxFromAssetsPage(gpxAssetPath: 'assets/gpx/2023_10_26.gpx'),
+                ),
+              );
               print('查看 2023/10/26 跑步詳細!');
             },
           ),
@@ -252,11 +261,115 @@ class _MainPageState extends State<MainPage> {
             subtitle: const Text('時間: 26:15, 配速: 8:45 / km', style: TextStyle(fontSize: 16)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GpxFromAssetsPage(gpxAssetPath: 'assets/gpx/2023_10_24.gpx'),
+                ),
+              );
               print('查看 2023/10/24 跑步詳細!');
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+// ----------------------- gpx
+
+class GpxFromAssetsPage extends StatefulWidget {
+  final String gpxAssetPath;
+
+  const GpxFromAssetsPage({super.key, required this.gpxAssetPath});
+
+  @override
+  State<GpxFromAssetsPage> createState() => _GpxFromAssetsPageState();
+}
+
+class _GpxFromAssetsPageState extends State<GpxFromAssetsPage> {
+  final MapController _mapController = MapController();
+  List<LatLng> _points = [];
+  LatLngBounds? _bounds;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGpx();
+  }
+
+  Future<void> _loadGpx() async {
+    final gpxString = await rootBundle.loadString(widget.gpxAssetPath);
+    final gpx = GpxReader().fromString(gpxString);
+
+    final pts = gpx.trks
+        .expand((t) => t.trksegs)
+        .expand((s) => s.trkpts)
+        .map((pt) => LatLng(pt.lat!, pt.lon!))
+        .toList();
+
+    if (pts.isNotEmpty) {
+      final bounds = LatLngBounds.fromPoints(pts);
+      setState(() {
+        _points = pts;
+        _bounds = bounds;
+      });
+
+      Future.delayed(Duration(milliseconds: 200), () {
+        _mapController.fitCamera(
+          CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(32)),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Assets GPX 地圖')),
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          // 初始視野使用 bounds，自動 center 與 zoom
+          initialCameraFit: _bounds != null
+              ? CameraFit.bounds(bounds: _bounds!)
+              : null,
+          maxZoom: 18,
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.myapp',
+          ),
+          if (_points.isNotEmpty)
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: _points,
+                  color: Colors.blue,
+                  strokeWidth: 4,
+                ),
+              ],
+            ),
+          if (_points.isNotEmpty)
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: _points.first,
+                  width: 40,
+                  height: 40,
+                  child: const Icon(Icons.location_on, color: Colors.green, size: 32),
+                ),
+                Marker(
+                  point: _points.last,
+                  width: 40,
+                  height: 40,
+                  child: const Icon(Icons.location_on, color: Colors.red, size: 32),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }
