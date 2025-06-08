@@ -160,15 +160,28 @@ class _RecordPageState extends State<RecordPage> {
     try {
       final file = await _localFile;
       if (!await file.exists()) {
+        print("檔案不存在，建立初始資料");
+        _createInitialData();
+        await _saveHistoryToFile();
+        print("初始資料已建立，記錄數量: ${_runHistory.length}");
         return;
       }
       final contents = await file.readAsString();
+      if (contents.trim().isEmpty || contents == '[]') {
+        print("檔案為空，建立初始資料");
+        _createInitialData();
+        await _saveHistoryToFile();
+        return;
+      }
       final List<dynamic> jsonList = json.decode(contents);
       setState(() {
         _runHistory = jsonList.map((jsonItem) => RunRecord.fromJson(jsonItem)).toList();
       });
+      print("載入記錄數量: ${_runHistory.length}");
     } catch (e) {
-      print("讀取記錄時發生錯誤: $e");
+      print("讀取記錄時發生錯誤: $e，建立初始資料");
+      _createInitialData();
+      await _saveHistoryToFile();
     }
   }
 
@@ -180,6 +193,54 @@ class _RecordPageState extends State<RecordPage> {
     } catch (e) {
       print("儲存記錄時發生錯誤: $e");
     }
+  }
+
+  void _createInitialData() {
+    final now = DateTime.now();
+    setState(() {
+      _runHistory = [
+        RunRecord(
+          date: now.subtract(const Duration(days: 1)),
+          duration: '25:30',
+          distance: 3200.0,
+          pace: '07:58',
+          avgHeartRate: 145,
+          maxHeartRate: 162,
+        ),
+        RunRecord(
+          date: now.subtract(const Duration(days: 3)),
+          duration: '18:45',
+          distance: 2400.0,
+          pace: '07:48',
+          avgHeartRate: 138,
+          maxHeartRate: 155,
+        ),
+        RunRecord(
+          date: now.subtract(const Duration(days: 5)),
+          duration: '32:15',
+          distance: 4100.0,
+          pace: '07:52',
+          avgHeartRate: 142,
+          maxHeartRate: 158,
+        ),
+        RunRecord(
+          date: now.subtract(const Duration(days: 7)),
+          duration: '15:20',
+          distance: 2000.0,
+          pace: '07:40',
+          avgHeartRate: 140,
+          maxHeartRate: 152,
+        ),
+        RunRecord(
+          date: now.subtract(const Duration(days: 10)),
+          duration: '40:30',
+          distance: 5200.0,
+          pace: '07:47',
+          avgHeartRate: 148,
+          maxHeartRate: 165,
+        ),
+      ];
+    });
   }
 
   // 新增：刪除單筆記錄的方法
