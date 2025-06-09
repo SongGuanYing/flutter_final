@@ -93,6 +93,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildMarker(DateTime date) {
+    _extractRunDays();
     final hasNote = _dateNotes.containsKey(DateTime(date.year, date.month, date.day));
     final isRunDay = _runDays.contains(date.day) && date.month == _selectedDay.month;
 
