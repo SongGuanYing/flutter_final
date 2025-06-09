@@ -254,9 +254,9 @@ class RecordPageState extends State<RecordPage> {
       }
       final List<dynamic> jsonList = json.decode(contents);
       setState(() {
-        _runHistory = jsonList.map((jsonItem) => RunRecord.fromJson(jsonItem)).toList();
+        RunHistory.runHistory = jsonList.map((jsonItem) => RunRecord.fromJson(jsonItem)).toList();
       });
-      print("載入記錄數量: ${_runHistory.length}");
+      print("載入記錄數量: ${RunHistory.runHistory.length}");
     } catch (e) {
       print("讀取記錄時發生錯誤: $e，建立初始資料");
       //_createInitialData();
@@ -267,7 +267,7 @@ class RecordPageState extends State<RecordPage> {
   Future<void> _saveHistoryToFile() async {
     try {
       final file = await _localFile;
-      final jsonList = _runHistory.map((record) => record.toJson()).toList();
+      final jsonList = RunHistory.runHistory.map((record) => record.toJson()).toList();
       await file.writeAsString(json.encode(jsonList));
     } catch (e) {
       print("儲存記錄時發生錯誤: $e");
@@ -279,7 +279,7 @@ class RecordPageState extends State<RecordPage> {
   // 新增：刪除單筆記錄的方法
   Future<void> _deleteRunRecord(int index) async {
     setState(() {
-      _runHistory.removeAt(index);
+      RunHistory.runHistory.removeAt(index);
     });
     await _saveHistoryToFile();
   }
@@ -298,7 +298,7 @@ class RecordPageState extends State<RecordPage> {
       maxHeartRate: _maxHeartRate,
     );
     setState(() {
-      _runHistory.insert(0, record);
+      RunHistory.runHistory.insert(0, record);
     });
     _saveHistoryToFile();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -524,12 +524,12 @@ class RecordPageState extends State<RecordPage> {
   }
 
   void _navigateToHistoryPage() {
-    if (_runHistory.isNotEmpty) {
+    if (RunHistory.runHistory.isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => RunHistoryPage(
-            records: _runHistory,
+            records: RunHistory.runHistory,
             onDeleteRecord: _deleteRunRecord, // 傳遞刪除函數
           ),
         ),
