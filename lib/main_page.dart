@@ -6,6 +6,9 @@ import 'package:gpx/gpx.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'run_history.dart';
+import  'record.dart';
+import 'package:intl/intl.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.onStartRun}) : super(key: key);
@@ -232,7 +235,7 @@ class _MainPageState extends State<MainPage> {
         const Text('最近跑步紀錄', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
 
-        Card(
+        /*Card(
           elevation: 1.0,
           margin: const EdgeInsets.symmetric(vertical: 4.0),
           child: ListTile(
@@ -270,11 +273,61 @@ class _MainPageState extends State<MainPage> {
               print('查看 2023/10/24 跑步詳細!');
             },
           ),
+        ),*/
+
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: RunHistory.runHistory.length,
+          itemBuilder: (context, index) {
+            final record = RunHistory.runHistory[index];
+            return Card(
+              elevation: 1.0,
+              margin: const EdgeInsets.symmetric(vertical: 4.0),
+              child: ListTile(
+                leading: Icon(Icons.run_circle, color: Theme.of(context).primaryColor),
+                title: Text(
+                  '${DateFormat('yyyy/MM/dd').format(record.date)} - ${record.distance / 1000} km',
+                  style: const TextStyle(fontSize: 18),
+                ),
+                subtitle: Text(
+                  '時間: ${record.duration}, 配速: ${record.pace} / km',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        setState(() {
+                          RunHistory.runHistory.removeAt(index);
+                        });
+                      },
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RunDetailPage(record: record),
+
+                    ),
+                  );
+                  setState(() {});
+                },
+              ),
+            );
+          },
         ),
       ],
     );
   }
 }
+
+
 
 // ----------------------- gpx
 
