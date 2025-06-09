@@ -551,13 +551,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => print('lmao'),
                 ),
-                const Divider(),
-                ListTile(
-                  leading: Icon(Icons.file_download, color: Theme.of(context).primaryColor),
-                  title: const Text('匯出跑步紀錄為 GPX', style: TextStyle(fontSize: 18)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => print('lmao'),
-                ),
               ],
             ),
           ),
