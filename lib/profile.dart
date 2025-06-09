@@ -41,6 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
         selectedName = currentUser?.name;
         selectedHeight = currentUser?.height.toString();
         selectedWeight = currentUser?.weight.toString();
+        _cadenceValue=currentUser!.cadence!.toDouble();
       });
     }
     print('使用者名稱: ${currentUser?.name}');
