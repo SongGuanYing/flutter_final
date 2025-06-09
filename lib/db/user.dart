@@ -34,16 +34,15 @@ class User {
 
   static User fromMap(Map<String, dynamic> map) {
     return User(
-      userID: map['userID'],
-      name: map['name'],
-      password: map['password'],
-      photo: map['photo'],
-      height: map['height'],
-      weight: map['weight'],
-      cadence: map['cadence'],
+      userID: map['userID'] ?? '', // 字符串字段默认空字符串
+      name: map['name'] ?? '',
+      password: map['password'] ?? '',
+      photo: map['photo'] ?? '', // 如果photo是图片路径
+      height: map['height'] ?? 0.0, // 数值字段默认0
+      weight: map['weight'] ?? 0.0,
+      cadence: map['cadence'] ?? 0,
     );
   }
-
   Future<void> insert() async {
     final db = await DatabaseHelper.instance.database; // 使用單例資料庫
     await db.insert(
