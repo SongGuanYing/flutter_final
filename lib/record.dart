@@ -189,7 +189,18 @@ class RecordPageState extends State<RecordPage> {
     });
 
     try {
-      final gpxString = await rootBundle.loadString(gpxPath);
+      String gpxString;
+
+      if (gpxPath.startsWith('/')) {
+        // 👉 本地檔案
+        print('[record.dart] 從本地檔案讀取 GPX...');
+        gpxString = await File(gpxPath).readAsString();
+      } else {
+        // 👉 assets 檔案
+        print('[record.dart] 從 assets 讀取 GPX...');
+        gpxString = await rootBundle.loadString(gpxPath);
+      }
+
       final gpx = GpxReader().fromString(gpxString);
       List<LatLng> points = [];
 
@@ -199,9 +210,7 @@ class RecordPageState extends State<RecordPage> {
         }
       }
 
-      // 3. 加入關鍵的 print 指令，確認解析結果
       print('[record.dart] GPX 檔案解析成功，共找到 ${points.length} 個座標點。');
-
       if (points.isNotEmpty) {
         print('[record.dart] 第一個座標點是：${points.first}');
       }
@@ -213,12 +222,10 @@ class RecordPageState extends State<RecordPage> {
 
       if (points.isNotEmpty) {
         _mapController.move(points.first, _currentZoom);
-        // 4. 確認地圖移動指令已發出
         print('[record.dart] 地圖移動指令已發出，移至座標：${points.first}');
       }
-
     } catch (e) {
-      print('[record.dart] 載入或解析GPX檔案時發生嚴重錯誤: $e'); // <--- 檢查這裡是否有輸出
+      print('[record.dart] 載入或解析GPX檔案時發生嚴重錯誤: $e');
       setState(() {
         _isLoadingGpx = false;
       });

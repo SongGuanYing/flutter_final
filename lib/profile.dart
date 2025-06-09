@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_final/record.dart';
 
 import './db/db_init.dart';
 import './db/user.dart';
@@ -550,7 +552,31 @@ class _ProfilePageState extends State<ProfilePage> {
                   leading: Icon(Icons.file_upload, color: Theme.of(context).primaryColor),
                   title: const Text('匯入 GPX 檔案', style: TextStyle(fontSize: 18)),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => print('lmao'),
+                  onTap: () async {
+                    print('[UI] 使用者點擊匯入 GPX');
+
+                    FilePickerResult? result = await FilePicker.platform.pickFiles(
+                      type: FileType.any,
+                    );
+
+                    if (result != null && result.files.single.path != null) {
+                      String filePath = result.files.single.path!;
+                      print('[UI] 選擇的 GPX 檔案路徑: $filePath');
+
+                      // 導向 record.dart，並傳遞檔案路徑
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            appBar: null, // 隱藏 AppBar
+                            body: RecordPage(routeGpxPath: filePath),
+                          ),
+                        ),
+                      );
+                    } else {
+                      print('[UI] 使用者取消選擇 GPX 檔案');
+                    }
+                  },
                 ),
               ],
             ),
