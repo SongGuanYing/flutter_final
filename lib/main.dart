@@ -132,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('登入成功：$userID')),
                   );
+                  Phoenix.rebirth(context);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('帳號或密碼錯誤')),
