@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'record.dart';
+import 'main.dart';
 
 // 路線資料模型
 class RouteData {
@@ -156,7 +157,7 @@ class _RoutePageState extends State<RoutePage> {
     RouteData(
       id: '6',
       name: '海岸線晨跑路線',
-      distance: 71.69 ,
+      distance: 71.69,
       estimatedDuration: 438,
       difficulty: '中級',
       elevation: 6.11,
@@ -328,7 +329,8 @@ class _RoutePageState extends State<RoutePage> {
 
     // 根據難度篩選
     if (_selectedDifficulty != null) {
-      filtered = filtered.where((r) => r.difficulty == _selectedDifficulty).toList();
+      filtered =
+          filtered.where((r) => r.difficulty == _selectedDifficulty).toList();
     }
 
     // 根據類型篩選
@@ -376,7 +378,9 @@ class _RoutePageState extends State<RoutePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('篩選路線', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('篩選路線',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -391,50 +395,61 @@ class _RoutePageState extends State<RoutePage> {
             const SizedBox(height: 12),
 
             // 難度篩選
-            const Text('難度等級', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('難度等級',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              children: _difficultyOptions.map((difficulty) =>
-                  ChoiceChip(
-                    label: Text(difficulty),
-                    selected: _selectedDifficulty == difficulty,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedDifficulty = selected ? difficulty : null;
-                      });
-                    },
-                    selectedColor: _getDifficultyColor(difficulty).withOpacity(0.3),
-                    labelStyle: TextStyle(
-                      color: _selectedDifficulty == difficulty ? _getDifficultyColor(difficulty) : null,
-                      fontWeight: _selectedDifficulty == difficulty ? FontWeight.bold : null,
-                    ),
-                  )
-              ).toList(),
+              children: _difficultyOptions
+                  .map((difficulty) => ChoiceChip(
+                        label: Text(difficulty),
+                        selected: _selectedDifficulty == difficulty,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedDifficulty = selected ? difficulty : null;
+                          });
+                        },
+                        selectedColor:
+                            _getDifficultyColor(difficulty).withOpacity(0.3),
+                        labelStyle: TextStyle(
+                          color: _selectedDifficulty == difficulty
+                              ? _getDifficultyColor(difficulty)
+                              : null,
+                          fontWeight: _selectedDifficulty == difficulty
+                              ? FontWeight.bold
+                              : null,
+                        ),
+                      ))
+                  .toList(),
             ),
             const SizedBox(height: 16),
 
             // 路線類型篩選
-            const Text('路線類型', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('路線類型',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              children: _typeOptions.map((type) =>
-                  ChoiceChip(
-                    label: Text(type),
-                    selected: _selectedType == type,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedType = selected ? type : null;
-                      });
-                    },
-                    selectedColor: Theme.of(context).primaryColor.withOpacity(0.3),
-                    labelStyle: TextStyle(
-                      color: _selectedType == type ? Theme.of(context).primaryColor : null,
-                      fontWeight: _selectedType == type ? FontWeight.bold : null,
-                    ),
-                  )
-              ).toList(),
+              children: _typeOptions
+                  .map((type) => ChoiceChip(
+                        label: Text(type),
+                        selected: _selectedType == type,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedType = selected ? type : null;
+                          });
+                        },
+                        selectedColor:
+                            Theme.of(context).primaryColor.withOpacity(0.3),
+                        labelStyle: TextStyle(
+                          color: _selectedType == type
+                              ? Theme.of(context).primaryColor
+                              : null,
+                          fontWeight:
+                              _selectedType == type ? FontWeight.bold : null,
+                        ),
+                      ))
+                  .toList(),
             ),
 
             // 顯示當前篩選結果
@@ -494,7 +509,9 @@ class _RoutePageState extends State<RoutePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('推薦路線', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('推薦路線',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
@@ -507,7 +524,9 @@ class _RoutePageState extends State<RoutePage> {
             const SizedBox(height: 10),
             const Text('根據您的位置和喜好推薦的優質跑步路線：', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 10),
-            ...filteredRoutes.map((route) => _buildRouteCard(route, false)).toList(),
+            ...filteredRoutes
+                .map((route) => _buildRouteCard(route, false))
+                .toList(),
             const SizedBox(height: 10),
             Center(
               child: ElevatedButton.icon(
@@ -519,8 +538,7 @@ class _RoutePageState extends State<RoutePage> {
                 label: const Text('尋找更多路線'),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white
-                ),
+                    foregroundColor: Colors.white),
               ),
             ),
           ],
@@ -540,7 +558,9 @@ class _RoutePageState extends State<RoutePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('已儲存路線', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('已儲存路線',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 TextButton.icon(
                   onPressed: () {
                     // TODO: 管理已儲存路線
@@ -552,7 +572,9 @@ class _RoutePageState extends State<RoutePage> {
               ],
             ),
             const SizedBox(height: 10),
-            ...mockSavedRoutes.map((route) => _buildRouteCard(route, true)).toList(),
+            ...mockSavedRoutes
+                .map((route) => _buildRouteCard(route, true))
+                .toList(),
           ],
         ),
       ),
@@ -576,7 +598,8 @@ class _RoutePageState extends State<RoutePage> {
                   Expanded(
                     child: Text(
                       route.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                   if (!isSaved) ...[
@@ -596,9 +619,11 @@ class _RoutePageState extends State<RoutePage> {
                 children: [
                   _buildInfoChip(Icons.straighten, '${route.distance} km'),
                   const SizedBox(width: 8),
-                  _buildInfoChip(Icons.access_time, '${route.estimatedDuration} 分鐘'),
+                  _buildInfoChip(
+                      Icons.access_time, '${route.estimatedDuration} 分鐘'),
                   const SizedBox(width: 8),
-                  _buildInfoChip(Icons.trending_up, '${route.elevation.toInt()}m'),
+                  _buildInfoChip(
+                      Icons.trending_up, '${route.elevation.toInt()}m'),
                 ],
               ),
               const SizedBox(height: 8),
@@ -628,16 +653,19 @@ class _RoutePageState extends State<RoutePage> {
               // 標籤
               Wrap(
                 spacing: 4.0,
-                children: route.tags.take(3).map((tag) =>
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(tag, style: const TextStyle(fontSize: 11)),
-                    )
-                ).toList(),
+                children: route.tags
+                    .take(3)
+                    .map((tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child:
+                              Text(tag, style: const TextStyle(fontSize: 11)),
+                        ))
+                    .toList(),
               ),
 
               // 動作按鈕
@@ -746,7 +774,8 @@ class _RoutePageState extends State<RoutePage> {
                   Expanded(
                     child: Text(
                       route.name,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                   Row(
@@ -768,18 +797,24 @@ class _RoutePageState extends State<RoutePage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildDetailInfo('距離', '${route.distance} km', Icons.straighten),
-                          _buildDetailInfo('時間', '${route.estimatedDuration} 分', Icons.access_time),
-                          _buildDetailInfo('爬升', '${route.elevation.toInt()} m', Icons.trending_up),
+                          _buildDetailInfo(
+                              '距離', '${route.distance} km', Icons.straighten),
+                          _buildDetailInfo('時間', '${route.estimatedDuration} 分',
+                              Icons.access_time),
+                          _buildDetailInfo('爬升', '${route.elevation.toInt()} m',
+                              Icons.trending_up),
                         ],
                       ),
                       const Divider(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildDetailInfo('難度', route.difficulty, Icons.fitness_center),
-                          _buildDetailInfo('路面', route.surfaceType, Icons.texture),
-                          _buildDetailInfo('類型', route.isLoop ? '環狀' : '單程', Icons.route),
+                          _buildDetailInfo(
+                              '難度', route.difficulty, Icons.fitness_center),
+                          _buildDetailInfo(
+                              '路面', route.surfaceType, Icons.texture),
+                          _buildDetailInfo(
+                              '類型', route.isLoop ? '環狀' : '單程', Icons.route),
                         ],
                       ),
                     ],
@@ -789,13 +824,15 @@ class _RoutePageState extends State<RoutePage> {
               const SizedBox(height: 16),
 
               // 描述
-              const Text('路線描述', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('路線描述',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text(route.description, style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
 
               // 起終點
-              const Text('起終點資訊', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('起終點資訊',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Card(
                 child: Padding(
@@ -824,28 +861,32 @@ class _RoutePageState extends State<RoutePage> {
               const SizedBox(height: 16),
 
               // 路線亮點
-              const Text('路線亮點', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('路線亮點',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: route.highlights.map((highlight) =>
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[100],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star_outline, size: 16, color: Colors.blue),
-                          const SizedBox(width: 4),
-                          Text(highlight, style: const TextStyle(color: Colors.blue)),
-                        ],
-                      ),
-                    )
-                ).toList(),
+                children: route.highlights
+                    .map((highlight) => Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[100],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_outline,
+                                  size: 16, color: Colors.blue),
+                              const SizedBox(width: 4),
+                              Text(highlight,
+                                  style: const TextStyle(color: Colors.blue)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               ),
               const SizedBox(height: 20),
 
@@ -866,7 +907,10 @@ class _RoutePageState extends State<RoutePage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _startRoute(route),
+                      onPressed: () => setState(() {
+                        _startRoute(route);
+                        Navigator.pop(context);
+                      }),
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('開始跑步'),
                       style: ElevatedButton.styleFrom(
@@ -892,7 +936,8 @@ class _RoutePageState extends State<RoutePage> {
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -907,8 +952,6 @@ class _RoutePageState extends State<RoutePage> {
 
   // 修改 _startRoute 方法，使用 Navigator.push 並傳遞路線參數
   void _startRoute(RouteData route) {
-
-
     // 直接呼叫從父層 (HomeScreen) 傳進來的函式，並把路線資料傳回去
     widget.onStartRoute(route);
 
