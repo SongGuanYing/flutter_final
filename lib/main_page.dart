@@ -22,12 +22,21 @@ class _MainPageState extends State<MainPage> {
   late Future<Map<String, dynamic>> weatherFuture;
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, String> _dateNotes = {};
-  List<int> _runDays = [10, 15, 20, 25]; // 假設這些日期有跑步紀錄
+  List<int> _runDays = []; // 假設這些日期有跑步紀錄
 
   @override
   void initState() {
     super.initState();
     weatherFuture = fetchChiayiWeather();
+    _extractRunDays();
+  }
+
+  void _extractRunDays() {
+    _runDays = RunHistory.runHistory
+        .map((record) => record.date.day)
+        .toSet() // 若你想要避免重複
+        .toList()
+      ..sort(); // 排序是可選的
   }
 
   Future<Map<String, dynamic>> fetchChiayiWeather() async {
@@ -287,7 +296,7 @@ class _MainPageState extends State<MainPage> {
               child: ListTile(
                 leading: Icon(Icons.run_circle, color: Theme.of(context).primaryColor),
                 title: Text(
-                  '${DateFormat('yyyy/MM/dd').format(record.date)} - ${record.distance / 1000} km',
+                  '${DateFormat('yyyy/MM/dd').format(record.date)} - ${(record.distance / 1000).toStringAsFixed(2)} km',
                   style: const TextStyle(fontSize: 18),
                 ),
                 subtitle: Text(
