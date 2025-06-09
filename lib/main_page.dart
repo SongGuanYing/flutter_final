@@ -118,6 +118,11 @@ class _MainPageState extends State<MainPage> {
     int mockRunStreak = 10;
     double mockTotalDistance = 55.6;
     int mockTotalRuns = 15;
+    double totalDistance=0.0;
+    int count=RunHistory.runHistory.length;
+    for(int i=0;i<RunHistory.runHistory.length;i++){
+      totalDistance+=RunHistory.runHistory[i].distance;
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -197,7 +202,7 @@ class _MainPageState extends State<MainPage> {
                   children: [
                     const Text('總距離', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text('${mockTotalDistance.toStringAsFixed(1)} km',
+                    Text('${(totalDistance/1000).toStringAsFixed(1)} km',
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
                   ],
                 ),
@@ -205,7 +210,7 @@ class _MainPageState extends State<MainPage> {
                   children: [
                     const Text('總次數', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text('$mockTotalRuns 次',
+                    Text('$count 次',
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
                   ],
                 ),
@@ -213,7 +218,7 @@ class _MainPageState extends State<MainPage> {
                   children: [
                     const Text('連續達成', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text('$mockRunStreak 天',
+                    Text('2 天',
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
                   ],
                 ),
