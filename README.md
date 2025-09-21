@@ -1,7 +1,3 @@
----
-title: flutterFinal 好腳步
-
----
 
 # goodPace 好腳步
 ![appstore](https://hackmd.io/_uploads/HJqGPvNmgx.png)
